@@ -36,9 +36,13 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-20 items-center">
           <Link to="/" className="flex items-center space-x-2">
-            <span className="text-2xl font-serif font-bold tracking-tighter text-gray-900 uppercase">{settings.siteName.split(' ')[0]}</span>
-            {settings.siteName.split(' ').length > 1 && (
-              <span className="text-xs uppercase tracking-widest text-gold-600 font-medium">{settings.siteName.split(' ').slice(1).join(' ')}</span>
+            <span className="text-2xl font-serif font-bold tracking-tighter text-gray-900 uppercase">
+              {(settings.siteName || 'Prahvi').split(' ')[0]}
+            </span>
+            {(settings.siteName || 'Prahvi Jewelry').split(' ').length > 1 && (
+              <span className="text-xs uppercase tracking-widest text-gold-600 font-medium">
+                {(settings.siteName || 'Prahvi Jewelry').split(' ').slice(1).join(' ')}
+              </span>
             )}
           </Link>
 
@@ -603,7 +607,6 @@ const ProductDetail = () => {
               <button
                 onClick={() => {
                   addToCart(product);
-                  toast.success("Added to cart!");
                 }}
                 disabled={product.stock === 0}
                 className="flex-grow bg-gray-900 text-white py-5 rounded-2xl font-bold hover:bg-gold-600 transition-all shadow-xl disabled:bg-gray-300 disabled:cursor-not-allowed"
@@ -741,9 +744,9 @@ const Cart = () => {
               </div>
               <div className="flex items-center space-x-4">
                 <div className="flex items-center border border-gray-200 rounded-lg">
-                  <button onClick={() => updateQuantity(item.productId, -1)} className="p-2 hover:bg-gray-50"><Minus size={16} /></button>
+                  <button onClick={() => updateQuantity(item.productId, item.quantity - 1)} className="p-2 hover:bg-gray-50"><Minus size={16} /></button>
                   <span className="w-8 text-center font-medium">{item.quantity}</span>
-                  <button onClick={() => updateQuantity(item.productId, 1)} className="p-2 hover:bg-gray-50"><Plus size={16} /></button>
+                  <button onClick={() => updateQuantity(item.productId, item.quantity + 1)} className="p-2 hover:bg-gray-50"><Plus size={16} /></button>
                 </div>
                 <button onClick={() => removeFromCart(item.productId)} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
                   <Trash2 size={20} />
@@ -965,7 +968,7 @@ const Checkout = () => {
 
 const Contact = () => {
   const { settings } = useSettings();
-  const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
+  const [formData, setFormData] = useState({ name: '', email: '', phone: '', subject: '', message: '' });
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -977,7 +980,7 @@ const Contact = () => {
         createdAt: serverTimestamp(),
       });
       toast.success("Message sent! We'll get back to you soon.");
-      setFormData({ name: '', email: '', subject: '', message: '' });
+      setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
     } catch (error) {
       toast.error("Failed to send message.");
     } finally {
@@ -1038,6 +1041,17 @@ const Contact = () => {
               value={formData.email}
               onChange={e => setFormData({ ...formData, email: e.target.value })}
               className="w-full px-5 py-4 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-gold-500 outline-none transition-all"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">WhatsApp Number</label>
+            <input
+              required
+              type="text"
+              value={formData.phone}
+              onChange={e => setFormData({ ...formData, phone: e.target.value })}
+              className="w-full px-5 py-4 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-gold-500 outline-none transition-all"
+              placeholder="e.g. +91 98765 43210"
             />
           </div>
           <div className="space-y-2">
@@ -2250,7 +2264,14 @@ const AdminMessages = () => {
             <div className="flex justify-between items-start">
               <div className="space-y-1">
                 <h4 className="font-bold text-lg">{msg.name}</h4>
-                <p className="text-sm text-gold-600">{msg.email}</p>
+                <div className="flex items-center space-x-4">
+                  <p className="text-sm text-gold-600">{msg.email}</p>
+                  <span className="text-gray-300">|</span>
+                  <p className="text-sm text-gold-600 flex items-center space-x-1">
+                    <LucideIcons.Phone size={14} />
+                    <span>{msg.phone}</span>
+                  </p>
+                </div>
                 <p className="text-xs text-gray-400">{new Date(msg.createdAt?.toDate()).toLocaleString()}</p>
               </div>
               <button onClick={async () => { if(window.confirm("Delete message?")) { await deleteDoc(doc(db, 'contact_messages', msg.id)); setMessages(messages.filter(m => m.id !== msg.id)); toast.success("Message deleted"); } }} className="text-gray-400 hover:text-red-500">
@@ -2258,7 +2279,7 @@ const AdminMessages = () => {
               </button>
             </div>
             <div className="bg-gray-50 p-4 rounded-xl">
-              <p className="text-sm text-gray-700 leading-relaxed">{msg.message}</p>
+              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{msg.message}</p>
             </div>
           </div>
         ))}

@@ -23,6 +23,7 @@ export interface OrderItem {
   price: number;
   quantity: number;
   image: string;
+  stock: number;
 }
 
 export interface Order {
@@ -58,6 +59,7 @@ export interface ContactMessage {
   id: string;
   name: string;
   email: string;
+  phone: string;
   subject: string;
   message: string;
   createdAt: any;
