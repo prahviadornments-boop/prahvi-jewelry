@@ -150,7 +150,17 @@ const defaultSettings: StoreSettings = {
   workingHours: 'Mon - Sat: 10am - 7pm',
   instagram: '#',
   facebook: '#',
-  whatsapp: '+15551234567'
+  whatsapp: '+15551234567',
+  features: [
+    { icon: 'Star', title: "Premium Quality", desc: "Certified diamonds & 18k gold" },
+    { icon: 'Truck', title: "Free Shipping", desc: "On all orders over $500" },
+    { icon: 'Shield', title: "Secure Payment", desc: "100% encrypted transactions" },
+    { icon: 'RefreshCcw', title: "Easy Returns", desc: "30-day money back guarantee" },
+  ],
+  paymentModes: {
+    whatsapp: true,
+    card: true
+  }
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -221,9 +231,9 @@ export const useAuth = () => {
             role: 'user',
             wishlist: []
           });
-          setIsAdmin(u.email === "kabbachiraponnappa@gmail.com");
+          setIsAdmin(u.email === "kabbachiraponnappa@gmail.com" || u.email === "prahviadornments@gmail.com");
         } else {
-          setIsAdmin(userDoc.data()?.role === 'admin' || u.email === "kabbachiraponnappa@gmail.com");
+          setIsAdmin(userDoc.data()?.role === 'admin' || u.email === "kabbachiraponnappa@gmail.com" || u.email === "prahviadornments@gmail.com");
         }
       } else {
         setIsAdmin(false);

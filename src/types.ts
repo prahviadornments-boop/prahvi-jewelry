@@ -63,6 +63,12 @@ export interface ContactMessage {
   createdAt: any;
 }
 
+export interface Feature {
+  icon: string;
+  title: string;
+  desc: string;
+}
+
 export interface StoreSettings {
   address: string;
   phone: string;
@@ -71,4 +77,9 @@ export interface StoreSettings {
   instagram: string;
   facebook: string;
   whatsapp: string;
+  features: Feature[];
+  paymentModes: {
+    whatsapp: boolean;
+    card: boolean;
+  };
 }

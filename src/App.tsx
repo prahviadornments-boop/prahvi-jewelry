@@ -5,10 +5,11 @@ import { auth, db, storage, loginWithGoogle, logout } from './firebase';
 import { doc, getDoc, collection, query, where, limit, getDocs, addDoc, serverTimestamp, updateDoc, deleteDoc, orderBy, setDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Toaster, toast } from 'sonner';
+import * as LucideIcons from 'lucide-react';
 import { ShoppingCart, User as UserIcon, Menu, X, Phone, Instagram, Facebook, Mail, MapPin, ChevronRight, Star, Trash2, Plus, Minus, Heart, Shield, Truck, RefreshCcw, LayoutDashboard, Package, ListTree, ShoppingBag, MessageSquare, Settings, LogOut, ExternalLink, Upload, AlertTriangle, TrendingUp, CreditCard } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Product, Category, Order, Review, Policy, ContactMessage, OrderItem, StoreSettings } from './types';
+import { Product, Category, Order, Review, Policy, ContactMessage, OrderItem, StoreSettings, Feature } from './types';
 import { ProductCard } from './components/ProductCard';
 import { CartProvider, WishlistProvider, SettingsProvider, useCart, useWishlist, useSettings, useAuth } from './contexts/StoreContext';
 
@@ -185,6 +186,7 @@ const Footer = () => {
 
 const Home = () => {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const { settings } = useSettings();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -262,22 +264,20 @@ const Home = () => {
       {/* Features */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 py-12 border-y border-gray-100">
-          {[
-            { icon: Star, title: "Premium Quality", desc: "Certified diamonds & 18k gold" },
-            { icon: Truck, title: "Free Shipping", desc: "On all orders over $500" },
-            { icon: Shield, title: "Secure Payment", desc: "100% encrypted transactions" },
-            { icon: RefreshCcw, title: "Easy Returns", desc: "30-day money back guarantee" },
-          ].map((feature, i) => (
-            <div key={i} className="flex items-center space-x-4">
-              <div className="p-3 bg-gold-50 text-gold-600 rounded-2xl">
-                <feature.icon size={24} />
+          {(settings.features || []).map((feature, i) => {
+            const IconComponent = (LucideIcons as any)[feature.icon] || Star;
+            return (
+              <div key={i} className="flex items-center space-x-4">
+                <div className="p-3 bg-gold-50 text-gold-600 rounded-2xl">
+                  <IconComponent size={24} />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-900">{feature.title}</h4>
+                  <p className="text-xs text-gray-500">{feature.desc}</p>
+                </div>
               </div>
-              <div>
-                <h4 className="font-semibold text-gray-900">{feature.title}</h4>
-                <p className="text-xs text-gray-500">{feature.desc}</p>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
@@ -756,6 +756,16 @@ const Checkout = () => {
     address: '',
   });
   const [paymentMethod, setPaymentMethod] = useState<'whatsapp' | 'card'>('whatsapp');
+
+  useEffect(() => {
+    if (settings.paymentModes) {
+      if (!settings.paymentModes.whatsapp && settings.paymentModes.card) {
+        setPaymentMethod('card');
+      } else if (settings.paymentModes.whatsapp) {
+        setPaymentMethod('whatsapp');
+      }
+    }
+  }, [settings]);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -854,39 +864,43 @@ const Checkout = () => {
           <div className="space-y-4">
             <label className="text-sm font-medium text-gray-700">Payment Method</label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <button
-                type="button"
-                onClick={() => setPaymentMethod('whatsapp')}
-                className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${paymentMethod === 'whatsapp' ? 'border-gold-500 bg-gold-50' : 'border-gray-100 hover:border-gray-200'}`}
-              >
-                <div className="flex items-center space-x-3">
-                  <div className={`p-2 rounded-lg ${paymentMethod === 'whatsapp' ? 'bg-gold-200 text-gold-700' : 'bg-gray-100 text-gray-500'}`}>
-                    <Phone size={20} />
+              {settings.paymentModes?.whatsapp && (
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod('whatsapp')}
+                  className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${paymentMethod === 'whatsapp' ? 'border-gold-500 bg-gold-50' : 'border-gray-100 hover:border-gray-200'}`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className={`p-2 rounded-lg ${paymentMethod === 'whatsapp' ? 'bg-gold-200 text-gold-700' : 'bg-gray-100 text-gray-500'}`}>
+                      <Phone size={20} />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm font-bold">WhatsApp</p>
+                      <p className="text-xs text-gray-500">Confirm & Pay</p>
+                    </div>
                   </div>
-                  <div className="text-left">
-                    <p className="text-sm font-bold">WhatsApp</p>
-                    <p className="text-xs text-gray-500">Confirm & Pay</p>
-                  </div>
-                </div>
-                {paymentMethod === 'whatsapp' && <div className="w-4 h-4 rounded-full bg-gold-500" />}
-              </button>
+                  {paymentMethod === 'whatsapp' && <div className="w-4 h-4 rounded-full bg-gold-500" />}
+                </button>
+              )}
 
-              <button
-                type="button"
-                onClick={() => setPaymentMethod('card')}
-                className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${paymentMethod === 'card' ? 'border-gold-500 bg-gold-50' : 'border-gray-100 hover:border-gray-200'}`}
-              >
-                <div className="flex items-center space-x-3">
-                  <div className={`p-2 rounded-lg ${paymentMethod === 'card' ? 'bg-gold-200 text-gold-700' : 'bg-gray-100 text-gray-500'}`}>
-                    <CreditCard size={20} />
+              {settings.paymentModes?.card && (
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod('card')}
+                  className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${paymentMethod === 'card' ? 'border-gold-500 bg-gold-50' : 'border-gray-100 hover:border-gray-200'}`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className={`p-2 rounded-lg ${paymentMethod === 'card' ? 'bg-gold-200 text-gold-700' : 'bg-gray-100 text-gray-500'}`}>
+                      <CreditCard size={20} />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm font-bold">Card Payment</p>
+                      <p className="text-xs text-gray-500">Secure Checkout</p>
+                    </div>
                   </div>
-                  <div className="text-left">
-                    <p className="text-sm font-bold">Card Payment</p>
-                    <p className="text-xs text-gray-500">Secure Checkout</p>
-                  </div>
-                </div>
-                {paymentMethod === 'card' && <div className="w-4 h-4 rounded-full bg-gold-500" />}
-              </button>
+                  {paymentMethod === 'card' && <div className="w-4 h-4 rounded-full bg-gold-500" />}
+                </button>
+              )}
             </div>
           </div>
 
@@ -1057,6 +1071,7 @@ const Policies = () => {
 
 const Profile = () => {
   const { user, loading } = useAuth();
+  const { settings } = useSettings();
   const [orders, setOrders] = useState<Order[]>([]);
 
   useEffect(() => {
@@ -1107,9 +1122,20 @@ const Profile = () => {
                 </div>
                 <div className="text-right">
                   <p className="text-lg font-bold text-gold-600">${order.total.toLocaleString()}</p>
-                  <span className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full ${order.status === 'delivered' ? 'bg-green-100 text-green-700' : 'bg-gold-100 text-gold-700'}`}>
-                    {order.status}
-                  </span>
+                  <div className="flex items-center space-x-3">
+                    <span className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full ${order.status === 'delivered' ? 'bg-green-100 text-green-700' : 'bg-gold-100 text-gold-700'}`}>
+                      {order.status}
+                    </span>
+                    <a
+                      href={`https://wa.me/${settings.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(`Hello! I have a question about my order #${order.id.slice(-6)}`)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="p-2 text-green-600 hover:bg-green-50 rounded-full transition-all"
+                      title="Contact support on WhatsApp"
+                    >
+                      <Phone size={14} />
+                    </a>
+                  </div>
                 </div>
               </div>
             ))}
@@ -1136,49 +1162,127 @@ const AdminSettings = () => {
     await updateSettings(formData);
   };
 
+  const updateFeature = (index: number, field: keyof Feature, value: string) => {
+    const newFeatures = [...(formData.features || [])];
+    newFeatures[index] = { ...newFeatures[index], [field]: value };
+    setFormData({ ...formData, features: newFeatures });
+  };
+
   if (loading) return <div>Loading settings...</div>;
 
   return (
     <div className="space-y-8">
       <h1 className="text-3xl font-serif font-bold">Store Settings</h1>
-      <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm max-w-2xl">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Store Email</label>
-              <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" required />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
+          <h3 className="text-xl font-serif font-bold mb-6">General Information</h3>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Store Email</label>
+                <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" required />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Phone Number</label>
+                <input type="text" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" required />
+              </div>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Phone Number</label>
-              <input type="text" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" required />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Store Address</label>
-            <textarea value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" rows={2} required />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">Working Hours</label>
-            <input type="text" value={formData.workingHours} onChange={e => setFormData({ ...formData, workingHours: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" required />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Instagram URL</label>
-              <input type="text" value={formData.instagram} onChange={e => setFormData({ ...formData, instagram: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+              <label className="text-sm font-medium text-gray-700">Store Address</label>
+              <textarea value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" rows={2} required />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Facebook URL</label>
-              <input type="text" value={formData.facebook} onChange={e => setFormData({ ...formData, facebook: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+              <label className="text-sm font-medium text-gray-700">Working Hours</label>
+              <input type="text" value={formData.workingHours} onChange={e => setFormData({ ...formData, workingHours: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" required />
             </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Instagram URL</label>
+                <input type="text" value={formData.instagram} onChange={e => setFormData({ ...formData, instagram: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Facebook URL</label>
+                <input type="text" value={formData.facebook} onChange={e => setFormData({ ...formData, facebook: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">WhatsApp Number (with country code)</label>
+              <input type="text" value={formData.whatsapp} onChange={e => setFormData({ ...formData, whatsapp: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+            </div>
+
+            <div className="pt-6 border-t border-gray-100 space-y-4">
+              <h4 className="font-bold">Payment Modes</h4>
+              <div className="flex space-x-6">
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.paymentModes?.whatsapp}
+                    onChange={e => setFormData({ ...formData, paymentModes: { ...formData.paymentModes, whatsapp: e.target.checked } })}
+                    className="w-5 h-5 rounded text-gold-600 focus:ring-gold-500"
+                  />
+                  <span className="text-sm font-medium">WhatsApp Checkout</span>
+                </label>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.paymentModes?.card}
+                    onChange={e => setFormData({ ...formData, paymentModes: { ...formData.paymentModes, card: e.target.checked } })}
+                    className="w-5 h-5 rounded text-gold-600 focus:ring-gold-500"
+                  />
+                  <span className="text-sm font-medium">Card Payment (Demo)</span>
+                </label>
+              </div>
+            </div>
+
+            <button type="submit" className="w-full bg-gray-900 text-white py-3 rounded-xl font-bold hover:bg-gold-600 transition-all">
+              Save Settings
+            </button>
+          </form>
+        </div>
+
+        <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-6">
+          <h3 className="text-xl font-serif font-bold">Features Section</h3>
+          <p className="text-sm text-gray-500">Edit the features shown on the homepage.</p>
+          <div className="space-y-6">
+            {(formData.features || []).map((feature, i) => (
+              <div key={i} className="p-4 bg-gray-50 rounded-2xl space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-400 uppercase">Icon (Lucide Name)</label>
+                    <input
+                      type="text"
+                      value={feature.icon}
+                      onChange={e => updateFeature(i, 'icon', e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm"
+                      placeholder="Star, Truck, Shield, etc."
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-400 uppercase">Title</label>
+                    <input
+                      type="text"
+                      value={feature.title}
+                      onChange={e => updateFeature(i, 'title', e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-400 uppercase">Description</label>
+                  <input
+                    type="text"
+                    value={feature.desc}
+                    onChange={e => updateFeature(i, 'desc', e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm"
+                  />
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">WhatsApp Number (with country code)</label>
-            <input type="text" value={formData.whatsapp} onChange={e => setFormData({ ...formData, whatsapp: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
-          </div>
-          <button type="submit" className="w-full bg-gray-900 text-white py-3 rounded-xl font-bold hover:bg-gold-600 transition-all">
-            Save Settings
+          <button onClick={handleSubmit} className="w-full bg-gray-900 text-white py-3 rounded-xl font-bold hover:bg-gold-600 transition-all">
+            Save Features
           </button>
-        </form>
+        </div>
       </div>
     </div>
   );
