@@ -70,6 +70,8 @@ export interface Feature {
 }
 
 export interface StoreSettings {
+  siteName: string;
+  siteDescription: string;
   address: string;
   phone: string;
   email: string;
@@ -77,6 +79,29 @@ export interface StoreSettings {
   instagram: string;
   facebook: string;
   whatsapp: string;
+  hero: {
+    title: string;
+    subtitle: string;
+    description: string;
+    image: string;
+  };
+  about: {
+    title: string;
+    content: string;
+    image: string;
+  };
+  categorySection: {
+    title: string;
+    description: string;
+  };
+  newsletter: {
+    title: string;
+    description: string;
+  };
+  featuredSection: {
+    title: string;
+    description: string;
+  };
   features: Feature[];
   paymentModes: {
     whatsapp: boolean;

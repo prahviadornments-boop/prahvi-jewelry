@@ -21,6 +21,7 @@ const Navbar = () => {
   const { cart } = useCart();
   const { wishlist } = useWishlist();
   const { user, isAdmin } = useAuth();
+  const { settings } = useSettings();
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
 
@@ -35,8 +36,10 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-20 items-center">
           <Link to="/" className="flex items-center space-x-2">
-            <span className="text-2xl font-serif font-bold tracking-tighter text-gray-900">PRAHVI</span>
-            <span className="text-xs uppercase tracking-widest text-gold-600 font-medium">Jewelry</span>
+            <span className="text-2xl font-serif font-bold tracking-tighter text-gray-900 uppercase">{settings.siteName.split(' ')[0]}</span>
+            {settings.siteName.split(' ').length > 1 && (
+              <span className="text-xs uppercase tracking-widest text-gold-600 font-medium">{settings.siteName.split(' ').slice(1).join(' ')}</span>
+            )}
           </Link>
 
           <div className="hidden md:flex items-center space-x-8">
@@ -124,10 +127,10 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
           <div className="space-y-6">
           <Link to="/" className="flex items-center space-x-2">
-            <span className="text-3xl font-serif font-bold tracking-tighter">PRAHVI</span>
+            <span className="text-3xl font-serif font-bold tracking-tighter uppercase">{settings.siteName}</span>
           </Link>
           <p className="text-gray-400 text-sm leading-relaxed">
-            Modern, trendy jewellery designed to elevate your everyday style. We create premium-looking pieces that are stylish, versatile, and affordable.
+            {settings.siteDescription}
           </p>
             <div className="flex space-x-4">
               <a href={settings.instagram} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-800 rounded-full hover:bg-gold-600 transition-colors"><Instagram size={18} /></a>
@@ -216,7 +219,7 @@ const Home = () => {
       <section className="relative h-[90vh] flex items-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img
-            src="https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&q=80&w=2000"
+            src={settings.hero?.image || "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&q=80&w=2000"}
             alt="Hero Jewelry"
             className="w-full h-full object-cover scale-105"
             referrerPolicy="no-referrer"
@@ -238,14 +241,13 @@ const Home = () => {
                 transition={{ delay: 0.2 }}
                 className="inline-block text-gold-400 font-medium tracking-[0.3em] uppercase text-sm"
               >
-                Premium Style. Affordable Luxury.
+                {settings.hero?.subtitle || "Premium Style. Affordable Luxury."}
               </motion.span>
               <h1 className="text-6xl md:text-8xl font-serif font-bold text-white leading-[0.9] tracking-tighter">
-                Elevate Your <br />
-                <span className="text-gold-500 italic">Everyday Style</span>
+                {settings.hero?.title || "Elevate Your Everyday Style"}
               </h1>
               <p className="text-lg text-gray-300 max-w-lg leading-relaxed font-light">
-                Modern, trendy jewellery designed to elevate your everyday style. Shine effortlessly from daily wear to special occasions without overspending.
+                {settings.hero?.description || "Modern, trendy jewellery designed to elevate your everyday style."}
               </p>
             </div>
             <div className="flex flex-wrap gap-4">
@@ -284,8 +286,8 @@ const Home = () => {
       {/* Categories */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         <div className="text-center space-y-4">
-          <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900">Shop by Category</h2>
-          <p className="text-gray-500 max-w-xl mx-auto">Explore our diverse range of jewelry pieces, each category telling its own unique story of luxury.</p>
+          <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900">{settings.categorySection?.title || "Shop by Category"}</h2>
+          <p className="text-gray-500 max-w-xl mx-auto">{settings.categorySection?.description || "Explore our diverse range of jewelry pieces."}</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {categories.length > 0 ? (
@@ -328,8 +330,8 @@ const Home = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           <div className="flex justify-between items-end">
             <div className="space-y-4">
-              <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900">Featured Pieces</h2>
-              <p className="text-gray-500">Our most coveted designs, handpicked for their exceptional craftsmanship.</p>
+              <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900">{settings.featuredSection?.title || "Featured Pieces"}</h2>
+              <p className="text-gray-500">{settings.featuredSection?.description || "Our most coveted designs, handpicked for their exceptional craftsmanship."}</p>
             </div>
             <Link to="/shop" className="hidden md:flex items-center space-x-2 text-gold-600 font-semibold hover:text-gold-700 transition-colors">
               <span>View All Products</span>
@@ -351,6 +353,44 @@ const Home = () => {
         </div>
       </section>
 
+      {/* About Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="relative h-[600px] rounded-[3rem] overflow-hidden"
+          >
+            <img
+              src={settings.about?.image || "https://images.unsplash.com/photo-1573408302185-06ff321cf6e6?auto=format&fit=crop&q=80&w=1000"}
+              alt="Our Story"
+              className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+            />
+            <div className="absolute inset-0 bg-gold-900/10" />
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="space-y-8"
+          >
+            <div className="space-y-4">
+              <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900">{settings.about?.title || "Our Story"}</h2>
+              <div className="w-20 h-1 bg-gold-600" />
+            </div>
+            <p className="text-lg text-gray-600 leading-relaxed">
+              {settings.about?.content || "Prahvi Jewelry was born out of a passion for creating beautiful, high-quality jewelry that everyone can afford."}
+            </p>
+            <Link to="/shop" className="inline-flex items-center space-x-2 text-gold-600 font-bold hover:text-gold-700 transition-colors group">
+              <span>Explore Our Collection</span>
+              <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </motion.div>
+        </div>
+      </section>
+
       {/* Newsletter */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="relative rounded-[3rem] overflow-hidden bg-gray-900 py-20 px-8 md:px-20 text-center space-y-8">
@@ -359,8 +399,8 @@ const Home = () => {
             <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-gold-600 blur-[120px] rounded-full" />
           </div>
           <div className="relative z-10 space-y-4 max-w-2xl mx-auto">
-            <h2 className="text-4xl md:text-5xl font-serif font-bold text-white">Join the Prahvi Circle</h2>
-            <p className="text-gray-400">Subscribe to receive exclusive offers, early access to new collections, and jewelry care tips.</p>
+            <h2 className="text-4xl md:text-5xl font-serif font-bold text-white">{settings.newsletter?.title || "Join the Prahvi Circle"}</h2>
+            <p className="text-gray-400">{settings.newsletter?.description || "Subscribe to receive exclusive offers, early access to new collections, and jewelry care tips."}</p>
             <form className="flex flex-col sm:flex-row gap-4 mt-8">
               <input
                 type="email"
@@ -1179,6 +1219,16 @@ const AdminSettings = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Site Name</label>
+                <input type="text" value={formData.siteName} onChange={e => setFormData({ ...formData, siteName: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" required />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Site Tagline</label>
+                <input type="text" value={formData.siteDescription} onChange={e => setFormData({ ...formData, siteDescription: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" required />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100">
+              <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Store Email</label>
                 <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" required />
               </div>
@@ -1241,7 +1291,79 @@ const AdminSettings = () => {
         </div>
 
         <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-6">
-          <h3 className="text-xl font-serif font-bold">Features Section</h3>
+          <h3 className="text-xl font-serif font-bold">Hero Section</h3>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Hero Title</label>
+              <input type="text" value={formData.hero?.title} onChange={e => setFormData({ ...formData, hero: { ...formData.hero, title: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Hero Subtitle</label>
+              <input type="text" value={formData.hero?.subtitle} onChange={e => setFormData({ ...formData, hero: { ...formData.hero, subtitle: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Hero Description</label>
+              <textarea value={formData.hero?.description} onChange={e => setFormData({ ...formData, hero: { ...formData.hero, description: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" rows={3} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Hero Image URL</label>
+              <input type="text" value={formData.hero?.image} onChange={e => setFormData({ ...formData, hero: { ...formData.hero, image: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+            </div>
+          </div>
+
+          <h3 className="text-xl font-serif font-bold pt-6 border-t border-gray-100">About Section</h3>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">About Title</label>
+              <input type="text" value={formData.about?.title} onChange={e => setFormData({ ...formData, about: { ...formData.about, title: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">About Content</label>
+              <textarea value={formData.about?.content} onChange={e => setFormData({ ...formData, about: { ...formData.about, content: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" rows={5} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">About Image URL</label>
+              <input type="text" value={formData.about?.image} onChange={e => setFormData({ ...formData, about: { ...formData.about, image: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+            </div>
+          </div>
+
+          <h3 className="text-xl font-serif font-bold pt-6 border-t border-gray-100">Category Section</h3>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Category Section Title</label>
+              <input type="text" value={formData.categorySection?.title} onChange={e => setFormData({ ...formData, categorySection: { ...formData.categorySection, title: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Category Section Description</label>
+              <textarea value={formData.categorySection?.description} onChange={e => setFormData({ ...formData, categorySection: { ...formData.categorySection, description: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" rows={2} />
+            </div>
+          </div>
+
+          <h3 className="text-xl font-serif font-bold pt-6 border-t border-gray-100">Newsletter Section</h3>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Newsletter Title</label>
+              <input type="text" value={formData.newsletter?.title} onChange={e => setFormData({ ...formData, newsletter: { ...formData.newsletter, title: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Newsletter Description</label>
+              <textarea value={formData.newsletter?.description} onChange={e => setFormData({ ...formData, newsletter: { ...formData.newsletter, description: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" rows={2} />
+            </div>
+          </div>
+
+          <h3 className="text-xl font-serif font-bold pt-6 border-t border-gray-100">Featured Section</h3>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Featured Section Title</label>
+              <input type="text" value={formData.featuredSection?.title} onChange={e => setFormData({ ...formData, featuredSection: { ...formData.featuredSection, title: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Featured Section Description</label>
+              <textarea value={formData.featuredSection?.description} onChange={e => setFormData({ ...formData, featuredSection: { ...formData.featuredSection, description: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" rows={2} />
+            </div>
+          </div>
+
+          <h3 className="text-xl font-serif font-bold pt-6 border-t border-gray-100">Features Section</h3>
           <p className="text-sm text-gray-500">Edit the features shown on the homepage.</p>
           <div className="space-y-6">
             {(formData.features || []).map((feature, i) => (
