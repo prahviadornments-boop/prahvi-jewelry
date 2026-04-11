@@ -910,17 +910,6 @@ const ProductDetail = () => {
                   <Heart size={24} fill={isInWishlist(product.id) ? "currentColor" : "none"} />
                 </button>
               </div>
-
-          <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-gray-50 rounded-2xl flex items-center space-x-3">
-                <Truck size={20} className="text-gold-600" />
-                <span className="text-sm font-medium text-gray-700">Free Express Delivery</span>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-2xl flex items-center space-x-3">
-                <Shield size={20} className="text-gold-600" />
-                <span className="text-sm font-medium text-gray-700">Lifetime Warranty</span>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -1115,7 +1104,7 @@ const Checkout = () => {
   const [paymentScreenshot, setPaymentScreenshot] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
 
-  const shippingFee = (total >= (settings.shipping?.freeThreshold || 2000)) 
+  const shippingFee = (total >= (settings.shipping?.freeThreshold || 5000)) 
     ? 0 
     : (settings.shipping?.pincodeRates?.[formData.pincode] || settings.shipping?.flatRate || 100);
   
