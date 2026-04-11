@@ -213,7 +213,12 @@ const defaultSettings: StoreSettings = {
     upi: true
   },
   upiId: '',
-  upiQrCode: ''
+  upiQrCode: '',
+  shipping: {
+    freeThreshold: 2000,
+    flatRate: 100,
+    pincodeRates: {}
+  }
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -233,7 +238,9 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       try {
         const docSnap = await getDoc(doc(db, 'settings', 'store'));
         if (docSnap.exists()) {
-          setSettings(docSnap.data() as StoreSettings);
+          const data = docSnap.data() as StoreSettings;
+          // Merge with default to ensure new fields exist
+          setSettings({ ...defaultSettings, ...data });
         } else {
           await setDoc(doc(db, 'settings', 'store'), defaultSettings);
         }
