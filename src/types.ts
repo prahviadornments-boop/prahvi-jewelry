@@ -3,11 +3,14 @@ export interface Product {
   name: string;
   description: string;
   price: number;
+  originalPrice?: number;
   category: string;
   images: string[];
   stock: number;
   featured: boolean;
   createdAt: any;
+  specs?: { [key: string]: string };
+  labels?: string[];
 }
 
 export interface Category {
@@ -23,6 +26,7 @@ export interface OrderItem {
   price: number;
   quantity: number;
   image: string;
+  stock: number;
 }
 
 export interface Order {
@@ -34,6 +38,8 @@ export interface Order {
   items: OrderItem[];
   total: number;
   status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
+  trackingNumber?: string;
+  trackingLink?: string;
   createdAt: any;
 }
 
@@ -58,6 +64,7 @@ export interface ContactMessage {
   id: string;
   name: string;
   email: string;
+  phone: string;
   subject: string;
   message: string;
   createdAt: any;
@@ -70,6 +77,8 @@ export interface Feature {
 }
 
 export interface StoreSettings {
+  siteName: string;
+  siteDescription: string;
   address: string;
   phone: string;
   email: string;
@@ -77,9 +86,47 @@ export interface StoreSettings {
   instagram: string;
   facebook: string;
   whatsapp: string;
+  announcementBar?: {
+    text: string;
+    link?: string;
+    enabled: boolean;
+  };
+  hero: {
+    title: string;
+    subtitle: string;
+    description: string;
+    image: string;
+  };
+  about: {
+    title: string;
+    content: string;
+    image: string;
+  };
+  categorySection: {
+    title: string;
+    description: string;
+  };
+  newsletter: {
+    title: string;
+    description: string;
+  };
+  featuredSection: {
+    title: string;
+    description: string;
+  };
   features: Feature[];
+  testimonials?: {
+    name: string;
+    content: string;
+    rating: number;
+    image?: string;
+  }[];
+  quickLinks?: { name: string; path: string }[];
   paymentModes: {
     whatsapp: boolean;
     card: boolean;
+    upi: boolean;
   };
+  upiId?: string;
+  upiQrCode?: string;
 }
