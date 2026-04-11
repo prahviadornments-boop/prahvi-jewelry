@@ -313,47 +313,60 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Categories Bar */}
-      <section className="bg-white border-b border-gray-100 sticky top-20 z-20 overflow-x-auto no-scrollbar">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-6 min-w-max gap-8">
-            <Link
-              to="/shop"
-              className="flex items-center space-x-3 text-gray-600 hover:text-gold-600 transition-all group"
-            >
-              <div className="p-3 rounded-2xl bg-gray-50 group-hover:bg-gold-50 transition-colors">
-                <Sparkles size={24} className="text-gold-600" />
-              </div>
-              <span className="text-sm font-bold tracking-tight uppercase">All Jewellery</span>
-            </Link>
-            {categories.map((cat) => {
-              const getIcon = (name: string) => {
-                const n = name.toLowerCase();
-                if (n.includes('gold')) return <Coins size={24} className="text-gold-600" />;
-                if (n.includes('diamond')) return <Diamond size={24} className="text-gold-600" />;
-                if (n.includes('earring')) return <Flower size={24} className="text-gold-600" />;
-                if (n.includes('ring')) return <Circle size={24} className="text-gold-600" />;
-                if (n.includes('daily')) return <Watch size={24} className="text-gold-600" />;
-                if (n.includes('gemstone')) return <Hexagon size={24} className="text-gold-600" />;
-                if (n.includes('wedding')) return <Heart size={24} className="text-gold-600" />;
-                if (n.includes('gift')) return <Gift size={24} className="text-gold-600" />;
-                return <MoreHorizontal size={24} className="text-gold-600" />;
-              };
+      {/* Categories Grid - Compact Circular Look */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center space-y-4 mb-12">
+          <h2 className="text-3xl md:text-4xl font-serif font-bold text-gray-900">
+            {settings?.categorySection?.title || "Shop by Category"}
+          </h2>
+          <p className="text-gray-500 max-w-2xl mx-auto">
+            {settings?.categorySection?.description || "Explore our diverse range of jewelry pieces."}
+          </p>
+        </div>
+        
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-6 md:gap-8">
+          <Link
+            to="/shop"
+            className="group flex flex-col items-center space-y-3"
+          >
+            <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gray-50 flex items-center justify-center border border-gray-100 group-hover:border-gold-400 group-hover:bg-gold-50 transition-all duration-500 overflow-hidden">
+              <Sparkles size={24} className="text-gold-600 group-hover:scale-110 transition-transform" />
+            </div>
+            <span className="text-[10px] font-bold text-gray-900 uppercase tracking-widest group-hover:text-gold-600 transition-colors">All</span>
+          </Link>
+          {categories.map((cat) => {
+            const getIcon = (name: string) => {
+              const n = name.toLowerCase();
+              if (n.includes('gold')) return <Coins size={24} className="text-gold-600" />;
+              if (n.includes('diamond')) return <Diamond size={24} className="text-gold-600" />;
+              if (n.includes('earring')) return <Flower size={24} className="text-gold-600" />;
+              if (n.includes('ring')) return <Circle size={24} className="text-gold-600" />;
+              if (n.includes('daily')) return <Watch size={24} className="text-gold-600" />;
+              if (n.includes('gemstone')) return <Hexagon size={24} className="text-gold-600" />;
+              if (n.includes('wedding')) return <Heart size={24} className="text-gold-600" />;
+              if (n.includes('gift')) return <Gift size={24} className="text-gold-600" />;
+              return <MoreHorizontal size={24} className="text-gold-600" />;
+            };
 
-              return (
-                <Link
-                  key={cat.id}
-                  to={`/shop?category=${cat.id}`}
-                  className="flex items-center space-x-3 text-gray-600 hover:text-gold-600 transition-all group"
-                >
-                  <div className="p-3 rounded-2xl bg-gray-50 group-hover:bg-gold-50 transition-colors">
-                    {getIcon(cat.name)}
-                  </div>
-                  <span className="text-sm font-bold tracking-tight uppercase">{cat.name}</span>
-                </Link>
-              );
-            })}
-          </div>
+            return (
+              <Link
+                key={cat.id}
+                to={`/shop?category=${cat.id}`}
+                className="group flex flex-col items-center space-y-3"
+              >
+                <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gray-50 flex items-center justify-center border border-gray-100 group-hover:border-gold-400 group-hover:bg-gold-50 transition-all duration-500 overflow-hidden">
+                  {cat.image ? (
+                    <img src={cat.image} alt={cat.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform" referrerPolicy="no-referrer" />
+                  ) : (
+                    getIcon(cat.name)
+                  )}
+                </div>
+                <span className="text-[10px] font-bold text-gray-900 uppercase tracking-widest group-hover:text-gold-600 transition-colors truncate w-full text-center">
+                  {cat.name}
+                </span>
+              </Link>
+            );
+          })}
         </div>
       </section>
 
@@ -1357,44 +1370,44 @@ const AdminSettings = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Site Name</label>
-                <input type="text" value={formData.siteName} onChange={e => setFormData({ ...formData, siteName: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" required />
+                <input type="text" value={formData.siteName || ''} onChange={e => setFormData({ ...formData, siteName: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" required />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Site Tagline</label>
-                <input type="text" value={formData.siteDescription} onChange={e => setFormData({ ...formData, siteDescription: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" required />
+                <input type="text" value={formData.siteDescription || ''} onChange={e => setFormData({ ...formData, siteDescription: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" required />
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Store Email</label>
-                <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" required />
+                <input type="email" value={formData.email || ''} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" required />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Phone Number</label>
-                <input type="text" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" required />
+                <input type="text" value={formData.phone || ''} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" required />
               </div>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Store Address</label>
-              <textarea value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" rows={2} required />
+              <textarea value={formData.address || ''} onChange={e => setFormData({ ...formData, address: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" rows={2} required />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Working Hours</label>
-              <input type="text" value={formData.workingHours} onChange={e => setFormData({ ...formData, workingHours: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" required />
+              <input type="text" value={formData.workingHours || ''} onChange={e => setFormData({ ...formData, workingHours: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" required />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Instagram URL</label>
-                <input type="text" value={formData.instagram} onChange={e => setFormData({ ...formData, instagram: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+                <input type="text" value={formData.instagram || ''} onChange={e => setFormData({ ...formData, instagram: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Facebook URL</label>
-                <input type="text" value={formData.facebook} onChange={e => setFormData({ ...formData, facebook: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+                <input type="text" value={formData.facebook || ''} onChange={e => setFormData({ ...formData, facebook: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
               </div>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">WhatsApp Number (with country code)</label>
-              <input type="text" value={formData.whatsapp} onChange={e => setFormData({ ...formData, whatsapp: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+              <input type="text" value={formData.whatsapp || ''} onChange={e => setFormData({ ...formData, whatsapp: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
             </div>
 
             <div className="pt-6 border-t border-gray-100 space-y-4">
@@ -1435,12 +1448,12 @@ const AdminSettings = () => {
                 <h4 className="font-bold">UPI Configuration</h4>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">UPI ID (e.g., yourname@okaxis)</label>
-                  <input type="text" value={formData.upiId} onChange={e => setFormData({ ...formData, upiId: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+                  <input type="text" value={formData.upiId || ''} onChange={e => setFormData({ ...formData, upiId: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">UPI QR Code Image URL</label>
                   <div className="flex space-x-4">
-                    <input type="text" value={formData.upiQrCode} onChange={e => setFormData({ ...formData, upiQrCode: e.target.value })} className="flex-grow px-4 py-2 rounded-xl border border-gray-200 outline-none" placeholder="Paste image URL here" />
+                    <input type="text" value={formData.upiQrCode || ''} onChange={e => setFormData({ ...formData, upiQrCode: e.target.value })} className="flex-grow px-4 py-2 rounded-xl border border-gray-200 outline-none" placeholder="Paste image URL here" />
                     <div className="relative">
                       <input
                         type="file"
@@ -1473,20 +1486,20 @@ const AdminSettings = () => {
           <div className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Hero Title</label>
-              <input type="text" value={formData.hero?.title} onChange={e => setFormData({ ...formData, hero: { ...formData.hero, title: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+              <input type="text" value={formData.hero?.title || ''} onChange={e => setFormData({ ...formData, hero: { ...formData.hero, title: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Hero Subtitle</label>
-              <input type="text" value={formData.hero?.subtitle} onChange={e => setFormData({ ...formData, hero: { ...formData.hero, subtitle: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+              <input type="text" value={formData.hero?.subtitle || ''} onChange={e => setFormData({ ...formData, hero: { ...formData.hero, subtitle: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Hero Description</label>
-              <textarea value={formData.hero?.description} onChange={e => setFormData({ ...formData, hero: { ...formData.hero, description: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" rows={3} />
+              <textarea value={formData.hero?.description || ''} onChange={e => setFormData({ ...formData, hero: { ...formData.hero, description: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" rows={3} />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Hero Image</label>
               <div className="flex items-center space-x-4">
-                <input type="text" value={formData.hero?.image} onChange={e => setFormData({ ...formData, hero: { ...formData.hero, image: e.target.value } })} className="flex-grow px-4 py-2 rounded-xl border border-gray-200 outline-none" placeholder="Image URL" />
+                <input type="text" value={formData.hero?.image || ''} onChange={e => setFormData({ ...formData, hero: { ...formData.hero, image: e.target.value } })} className="flex-grow px-4 py-2 rounded-xl border border-gray-200 outline-none" placeholder="Image URL" />
                 <input type="file" accept="image/*" onChange={e => handleImageUpload(e, 'hero')} className="hidden" id="hero-upload" />
                 <label htmlFor="hero-upload" className="p-2 bg-gray-100 rounded-xl cursor-pointer hover:bg-gray-200 transition-all">
                   <Upload size={20} />
@@ -1499,16 +1512,16 @@ const AdminSettings = () => {
           <div className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">About Title</label>
-              <input type="text" value={formData.about?.title} onChange={e => setFormData({ ...formData, about: { ...formData.about, title: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+              <input type="text" value={formData.about?.title || ''} onChange={e => setFormData({ ...formData, about: { ...formData.about, title: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">About Content</label>
-              <textarea value={formData.about?.content} onChange={e => setFormData({ ...formData, about: { ...formData.about, content: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" rows={5} />
+              <textarea value={formData.about?.content || ''} onChange={e => setFormData({ ...formData, about: { ...formData.about, content: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" rows={5} />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">About Image</label>
               <div className="flex items-center space-x-4">
-                <input type="text" value={formData.about?.image} onChange={e => setFormData({ ...formData, about: { ...formData.about, image: e.target.value } })} className="flex-grow px-4 py-2 rounded-xl border border-gray-200 outline-none" placeholder="Image URL" />
+                <input type="text" value={formData.about?.image || ''} onChange={e => setFormData({ ...formData, about: { ...formData.about, image: e.target.value } })} className="flex-grow px-4 py-2 rounded-xl border border-gray-200 outline-none" placeholder="Image URL" />
                 <input type="file" accept="image/*" onChange={e => handleImageUpload(e, 'about')} className="hidden" id="about-upload" />
                 <label htmlFor="about-upload" className="p-2 bg-gray-100 rounded-xl cursor-pointer hover:bg-gray-200 transition-all">
                   <Upload size={20} />
@@ -1568,11 +1581,11 @@ const AdminSettings = () => {
           <div className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Category Section Title</label>
-              <input type="text" value={formData.categorySection?.title} onChange={e => setFormData({ ...formData, categorySection: { ...formData.categorySection, title: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+              <input type="text" value={formData.categorySection?.title || ''} onChange={e => setFormData({ ...formData, categorySection: { ...formData.categorySection, title: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Category Section Description</label>
-              <textarea value={formData.categorySection?.description} onChange={e => setFormData({ ...formData, categorySection: { ...formData.categorySection, description: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" rows={2} />
+              <textarea value={formData.categorySection?.description || ''} onChange={e => setFormData({ ...formData, categorySection: { ...formData.categorySection, description: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" rows={2} />
             </div>
           </div>
 
@@ -1580,11 +1593,11 @@ const AdminSettings = () => {
           <div className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Newsletter Title</label>
-              <input type="text" value={formData.newsletter?.title} onChange={e => setFormData({ ...formData, newsletter: { ...formData.newsletter, title: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+              <input type="text" value={formData.newsletter?.title || ''} onChange={e => setFormData({ ...formData, newsletter: { ...formData.newsletter, title: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Newsletter Description</label>
-              <textarea value={formData.newsletter?.description} onChange={e => setFormData({ ...formData, newsletter: { ...formData.newsletter, description: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" rows={2} />
+              <textarea value={formData.newsletter?.description || ''} onChange={e => setFormData({ ...formData, newsletter: { ...formData.newsletter, description: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" rows={2} />
             </div>
           </div>
 
@@ -1592,11 +1605,11 @@ const AdminSettings = () => {
           <div className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Featured Section Title</label>
-              <input type="text" value={formData.featuredSection?.title} onChange={e => setFormData({ ...formData, featuredSection: { ...formData.featuredSection, title: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+              <input type="text" value={formData.featuredSection?.title || ''} onChange={e => setFormData({ ...formData, featuredSection: { ...formData.featuredSection, title: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Featured Section Description</label>
-              <textarea value={formData.featuredSection?.description} onChange={e => setFormData({ ...formData, featuredSection: { ...formData.featuredSection, description: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" rows={2} />
+              <textarea value={formData.featuredSection?.description || ''} onChange={e => setFormData({ ...formData, featuredSection: { ...formData.featuredSection, description: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" rows={2} />
             </div>
           </div>
 
@@ -1610,7 +1623,7 @@ const AdminSettings = () => {
                     <label className="text-xs font-bold text-gray-400 uppercase">Icon (Lucide Name)</label>
                     <input
                       type="text"
-                      value={feature.icon}
+                      value={feature.icon || ''}
                       onChange={e => updateFeature(i, 'icon', e.target.value)}
                       className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm"
                       placeholder="Star, Truck, Shield, etc."
@@ -1620,7 +1633,7 @@ const AdminSettings = () => {
                     <label className="text-xs font-bold text-gray-400 uppercase">Title</label>
                     <input
                       type="text"
-                      value={feature.title}
+                      value={feature.title || ''}
                       onChange={e => updateFeature(i, 'title', e.target.value)}
                       className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm"
                     />
@@ -1630,7 +1643,7 @@ const AdminSettings = () => {
                   <label className="text-xs font-bold text-gray-400 uppercase">Description</label>
                   <input
                     type="text"
-                    value={feature.desc}
+                    value={feature.desc || ''}
                     onChange={e => updateFeature(i, 'desc', e.target.value)}
                     className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm"
                   />
@@ -1981,7 +1994,16 @@ const AdminProducts = () => {
                     <button
                       onClick={() => {
                         setEditingProduct(product);
-                        setFormData({ ...product, images: product.images.join(', ') });
+                        setFormData({
+                          name: product.name || '',
+                          description: product.description || '',
+                          price: product.price || 0,
+                          originalPrice: product.originalPrice || 0,
+                          category: product.category || '',
+                          images: (product.images || []).join(', '),
+                          stock: product.stock || 0,
+                          featured: product.featured || false
+                        });
                         setIsModalOpen(true);
                       }}
                       className="p-2 text-gray-400 hover:text-gold-600 transition-colors"
@@ -2033,40 +2055,62 @@ const AdminProducts = () => {
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-2 col-span-2">
                     <label className="text-sm font-medium">Product Name</label>
-                    <input required type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200" />
+                    <input required type="text" value={formData.name || ''} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200" />
                   </div>
                   <div className="space-y-2 col-span-2">
                     <label className="text-sm font-medium">Description</label>
-                    <textarea required rows={3} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Selling Price (₹)</label>
-                    <input required type="number" value={formData.price} onChange={e => setFormData({ ...formData, price: Number(e.target.value) })} className="w-full px-4 py-3 rounded-xl border border-gray-200" />
+                    <textarea required rows={3} value={formData.description || ''} onChange={e => setFormData({ ...formData, description: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Original Price (₹)</label>
-                    <input type="number" value={formData.originalPrice} onChange={e => setFormData({ ...formData, originalPrice: Number(e.target.value) })} className="w-full px-4 py-3 rounded-xl border border-gray-200" />
+                    <input 
+                      type="number" 
+                      value={formData.originalPrice || 0} 
+                      onChange={e => {
+                        const original = Number(e.target.value);
+                        setFormData({ ...formData, originalPrice: original });
+                      }} 
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200" 
+                    />
                   </div>
-                  {formData.originalPrice > formData.price && (
-                    <div className="col-span-2">
-                      <p className="text-sm font-bold text-green-600">
-                        Auto-calculated Discount: {Math.round(((formData.originalPrice - formData.price) / formData.originalPrice) * 100)}% OFF
-                      </p>
-                    </div>
-                  )}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Discount (%)</label>
+                    <input 
+                      type="number" 
+                      value={(formData.originalPrice && formData.originalPrice > 0) ? Math.round(((formData.originalPrice - (formData.price || 0)) / formData.originalPrice) * 100) : 0} 
+                      onChange={e => {
+                        const discount = Number(e.target.value);
+                        if (formData.originalPrice && formData.originalPrice > 0) {
+                          const newPrice = Math.round(formData.originalPrice * (1 - discount / 100));
+                          setFormData({ ...formData, price: newPrice });
+                        }
+                      }} 
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200" 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Selling Price (₹)</label>
+                    <input 
+                      required 
+                      type="number" 
+                      value={formData.price || 0} 
+                      onChange={e => setFormData({ ...formData, price: Number(e.target.value) })} 
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200" 
+                    />
+                  </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Stock</label>
-                    <input required type="number" value={formData.stock} onChange={e => setFormData({ ...formData, stock: Number(e.target.value) })} className="w-full px-4 py-3 rounded-xl border border-gray-200" />
+                    <input required type="number" value={formData.stock || 0} onChange={e => setFormData({ ...formData, stock: Number(e.target.value) })} className="w-full px-4 py-3 rounded-xl border border-gray-200" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Category</label>
-                    <select required value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200">
+                    <select required value={formData.category || ''} onChange={e => setFormData({ ...formData, category: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200">
                       <option value="">Select Category</option>
                       {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
                   </div>
                   <div className="flex items-center space-x-3 pt-8">
-                    <input type="checkbox" checked={formData.featured} onChange={e => setFormData({ ...formData, featured: e.target.checked })} className="w-5 h-5 rounded text-gold-600 focus:ring-gold-500" />
+                    <input type="checkbox" checked={formData.featured || false} onChange={e => setFormData({ ...formData, featured: e.target.checked })} className="w-5 h-5 rounded text-gold-600 focus:ring-gold-500" />
                     <label className="text-sm font-medium">Featured Product</label>
                   </div>
                   <div className="space-y-2 col-span-2">
@@ -2096,7 +2140,7 @@ const AdminProducts = () => {
                         <label className="text-xs text-gray-500">Or Paste URLs (comma separated)</label>
                         <textarea
                           rows={2}
-                          value={formData.images}
+                          value={formData.images || ''}
                           onChange={e => setFormData({ ...formData, images: e.target.value })}
                           className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm"
                           placeholder="https://example.com/img1.jpg"
@@ -2206,16 +2250,16 @@ const AdminCategories = () => {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Category Name</label>
-                  <input required type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200" />
+                  <input required type="text" value={formData.name || ''} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Description</label>
-                  <textarea rows={2} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200" />
+                  <textarea rows={2} value={formData.description || ''} onChange={e => setFormData({ ...formData, description: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Category Image</label>
                   <div className="flex items-center space-x-4">
-                    <input type="text" required value={formData.image} onChange={e => setFormData({ ...formData, image: e.target.value })} className="flex-grow px-4 py-3 rounded-xl border border-gray-200" placeholder="URL or upload ->" />
+                    <input type="text" required value={formData.image || ''} onChange={e => setFormData({ ...formData, image: e.target.value })} className="flex-grow px-4 py-3 rounded-xl border border-gray-200" placeholder="URL or upload ->" />
                     <label className="cursor-pointer p-3 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">
                       <Upload size={20} className={isUploading ? 'animate-bounce' : ''} />
                       <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={isUploading} />
@@ -2471,7 +2515,7 @@ const AdminPolicies = () => {
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Policy Type</label>
               <select
-                value={formData.type}
+                value={formData.type || ''}
                 onChange={e => setFormData({ ...formData, type: e.target.value })}
                 className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none"
                 required
@@ -2486,7 +2530,7 @@ const AdminPolicies = () => {
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Content</label>
               <textarea
-                value={formData.content}
+                value={formData.content || ''}
                 onChange={e => setFormData({ ...formData, content: e.target.value })}
                 className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none h-64"
                 required
