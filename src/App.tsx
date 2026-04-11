@@ -6,7 +6,7 @@ import { doc, getDoc, collection, query, where, limit, getDocs, addDoc, serverTi
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Toaster, toast } from 'sonner';
 import * as LucideIcons from 'lucide-react';
-import { ShoppingCart, User as UserIcon, Menu, X, Phone, Instagram, Facebook, Mail, MapPin, ChevronRight, Star, Trash2, Plus, Minus, Heart, Shield, Truck, RefreshCcw, LayoutDashboard, Package, ListTree, ShoppingBag, MessageSquare, Settings, LogOut, ExternalLink, Upload, AlertTriangle, TrendingUp, CreditCard } from 'lucide-react';
+import { ShoppingCart, User as UserIcon, Menu, X, Phone, Instagram, Facebook, Mail, MapPin, ChevronRight, Star, Trash2, Plus, Minus, Heart, Shield, Truck, RefreshCcw, LayoutDashboard, Package, ListTree, ShoppingBag, MessageSquare, Settings, LogOut, ExternalLink, Upload, AlertTriangle, TrendingUp, CreditCard, Sparkles, Coins, Diamond, Flower, Circle, Watch, Hexagon, Gift, MoreHorizontal } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Product, Category, Order, Review, Policy, ContactMessage, OrderItem, StoreSettings, Feature } from './types';
@@ -17,10 +17,29 @@ import { CartProvider, WishlistProvider, SettingsProvider, useCart, useWishlist,
 
 // --- Components ---
 
+const uploadToImgBB = async (file: File) => {
+  const apiKey = (import.meta as any).env.VITE_IMGBB_API_KEY || '1ee43179b21bce887d7a14af6e26f788';
+  const formData = new FormData();
+  formData.append('image', file);
+  
+  const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+    method: 'POST',
+    body: formData
+  });
+  
+  const result = await response.json();
+  if (result.success) {
+    return result.data.url;
+  } else {
+    throw new Error(result.error?.message || 'Upload failed');
+  }
+};
+
 const Navbar = () => {
   const { cart } = useCart();
   const { wishlist } = useWishlist();
   const { user, isAdmin } = useAuth();
+  const { settings } = useSettings();
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
 
@@ -35,8 +54,14 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-20 items-center">
           <Link to="/" className="flex items-center space-x-2">
-            <span className="text-2xl font-serif font-bold tracking-tighter text-gray-900">PRAHVI</span>
-            <span className="text-xs uppercase tracking-widest text-gold-600 font-medium">Jewelry</span>
+            <span className="text-2xl font-serif font-bold tracking-tighter text-gray-900 uppercase">
+              {(settings?.siteName || 'Prahvi').split(' ')[0]}
+            </span>
+            {(settings?.siteName || 'Prahvi Jewelry').split(' ').length > 1 && (
+              <span className="text-xs uppercase tracking-widest text-gold-600 font-medium">
+                {(settings?.siteName || 'Prahvi Jewelry').split(' ').slice(1).join(' ')}
+              </span>
+            )}
           </Link>
 
           <div className="hidden md:flex items-center space-x-8">
@@ -124,25 +149,33 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
           <div className="space-y-6">
           <Link to="/" className="flex items-center space-x-2">
-            <span className="text-3xl font-serif font-bold tracking-tighter">PRAHVI</span>
+            <span className="text-3xl font-serif font-bold tracking-tighter uppercase">{settings?.siteName || 'Prahvi'}</span>
           </Link>
           <p className="text-gray-400 text-sm leading-relaxed">
-            Modern, trendy jewellery designed to elevate your everyday style. We create premium-looking pieces that are stylish, versatile, and affordable.
+            {settings?.siteDescription}
           </p>
             <div className="flex space-x-4">
-              <a href={settings.instagram} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-800 rounded-full hover:bg-gold-600 transition-colors"><Instagram size={18} /></a>
-              <a href={settings.facebook} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-800 rounded-full hover:bg-gold-600 transition-colors"><Facebook size={18} /></a>
-              <a href={`mailto:${settings.email}`} className="p-2 bg-gray-800 rounded-full hover:bg-gold-600 transition-colors"><Mail size={18} /></a>
+              <a href={settings?.instagram} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-800 rounded-full hover:bg-gold-600 transition-colors"><Instagram size={18} /></a>
+              <a href={settings?.facebook} target="_blank" rel="noopener noreferrer" className="p-2 bg-gray-800 rounded-full hover:bg-gold-600 transition-colors"><Facebook size={18} /></a>
+              <a href={`mailto:${settings?.email}`} className="p-2 bg-gray-800 rounded-full hover:bg-gold-600 transition-colors"><Mail size={18} /></a>
             </div>
           </div>
 
           <div>
             <h4 className="text-lg font-serif font-semibold mb-6">Quick Links</h4>
             <ul className="space-y-4 text-sm text-gray-400">
-              <li><Link to="/shop" className="hover:text-white transition-colors">Shop All</Link></li>
-              <li><Link to="/shop?category=rings" className="hover:text-white transition-colors">Rings</Link></li>
-              <li><Link to="/shop?category=necklaces" className="hover:text-white transition-colors">Necklaces</Link></li>
-              <li><Link to="/shop?category=earrings" className="hover:text-white transition-colors">Earrings</Link></li>
+              {settings?.quickLinks && settings.quickLinks.length > 0 ? (
+                settings.quickLinks.map((link, i) => (
+                  <li key={i}><Link to={link.path} className="hover:text-white transition-colors">{link.name}</Link></li>
+                ))
+              ) : (
+                <>
+                  <li><Link to="/shop" className="hover:text-white transition-colors">Shop All</Link></li>
+                  <li><Link to="/shop?category=rings" className="hover:text-white transition-colors">Rings</Link></li>
+                  <li><Link to="/shop?category=necklaces" className="hover:text-white transition-colors">Necklaces</Link></li>
+                  <li><Link to="/shop?category=earrings" className="hover:text-white transition-colors">Earrings</Link></li>
+                </>
+              )}
             </ul>
           </div>
 
@@ -161,15 +194,15 @@ const Footer = () => {
             <ul className="space-y-4 text-sm text-gray-400">
               <li className="flex items-start space-x-3">
                 <MapPin size={18} className="text-gold-600 shrink-0" />
-                <span>{settings.address}</span>
+                <span>{settings?.address}</span>
               </li>
               <li className="flex items-center space-x-3">
                 <Phone size={18} className="text-gold-600 shrink-0" />
-                <span>{settings.phone}</span>
+                <span>{settings?.phone}</span>
               </li>
               <li className="flex items-center space-x-3">
                 <Mail size={18} className="text-gold-600 shrink-0" />
-                <span>{settings.email}</span>
+                <span>{settings?.email}</span>
               </li>
             </ul>
           </div>
@@ -216,7 +249,7 @@ const Home = () => {
       <section className="relative h-[90vh] flex items-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img
-            src="https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&q=80&w=2000"
+            src={settings?.hero?.image || "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&q=80&w=2000"}
             alt="Hero Jewelry"
             className="w-full h-full object-cover scale-105"
             referrerPolicy="no-referrer"
@@ -238,14 +271,13 @@ const Home = () => {
                 transition={{ delay: 0.2 }}
                 className="inline-block text-gold-400 font-medium tracking-[0.3em] uppercase text-sm"
               >
-                Premium Style. Affordable Luxury.
+                {settings?.hero?.subtitle || "Premium Style. Affordable Luxury."}
               </motion.span>
               <h1 className="text-6xl md:text-8xl font-serif font-bold text-white leading-[0.9] tracking-tighter">
-                Elevate Your <br />
-                <span className="text-gold-500 italic">Everyday Style</span>
+                {settings?.hero?.title || "Elevate Your Everyday Style"}
               </h1>
               <p className="text-lg text-gray-300 max-w-lg leading-relaxed font-light">
-                Modern, trendy jewellery designed to elevate your everyday style. Shine effortlessly from daily wear to special occasions without overspending.
+                {settings?.hero?.description || "Modern, trendy jewellery designed to elevate your everyday style."}
               </p>
             </div>
             <div className="flex flex-wrap gap-4">
@@ -264,7 +296,7 @@ const Home = () => {
       {/* Features */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 py-12 border-y border-gray-100">
-          {(settings.features || []).map((feature, i) => {
+          {(settings?.features || []).map((feature, i) => {
             const IconComponent = (LucideIcons as any)[feature.icon] || Star;
             return (
               <div key={i} className="flex items-center space-x-4">
@@ -281,45 +313,60 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Categories */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-        <div className="text-center space-y-4">
-          <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900">Shop by Category</h2>
-          <p className="text-gray-500 max-w-xl mx-auto">Explore our diverse range of jewelry pieces, each category telling its own unique story of luxury.</p>
+      {/* Categories Grid - Compact Circular Look */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center space-y-4 mb-12">
+          <h2 className="text-3xl md:text-4xl font-serif font-bold text-gray-900">
+            {settings?.categorySection?.title || "Shop by Category"}
+          </h2>
+          <p className="text-gray-500 max-w-2xl mx-auto">
+            {settings?.categorySection?.description || "Explore our diverse range of jewelry pieces."}
+          </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {categories.length > 0 ? (
-            categories.map((cat, i) => (
-              <motion.div
+        
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-6 md:gap-8">
+          <Link
+            to="/shop"
+            className="group flex flex-col items-center space-y-3"
+          >
+            <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gray-50 flex items-center justify-center border border-gray-100 group-hover:border-gold-400 group-hover:bg-gold-50 transition-all duration-500 overflow-hidden">
+              <Sparkles size={24} className="text-gold-600 group-hover:scale-110 transition-transform" />
+            </div>
+            <span className="text-[10px] font-bold text-gray-900 uppercase tracking-widest group-hover:text-gold-600 transition-colors">All</span>
+          </Link>
+          {categories.map((cat) => {
+            const getIcon = (name: string) => {
+              const n = name.toLowerCase();
+              if (n.includes('gold')) return <Coins size={24} className="text-gold-600" />;
+              if (n.includes('diamond')) return <Diamond size={24} className="text-gold-600" />;
+              if (n.includes('earring')) return <Flower size={24} className="text-gold-600" />;
+              if (n.includes('ring')) return <Circle size={24} className="text-gold-600" />;
+              if (n.includes('daily')) return <Watch size={24} className="text-gold-600" />;
+              if (n.includes('gemstone')) return <Hexagon size={24} className="text-gold-600" />;
+              if (n.includes('wedding')) return <Heart size={24} className="text-gold-600" />;
+              if (n.includes('gift')) return <Gift size={24} className="text-gold-600" />;
+              return <MoreHorizontal size={24} className="text-gold-600" />;
+            };
+
+            return (
+              <Link
                 key={cat.id}
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="group relative h-80 rounded-3xl overflow-hidden cursor-pointer"
+                to={`/shop?category=${cat.id}`}
+                className="group flex flex-col items-center space-y-3"
               >
-                <img
-                  src={cat.image}
-                  alt={cat.name}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  referrerPolicy="no-referrer"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                <div className="absolute bottom-8 left-8 space-y-2">
-                  <h3 className="text-2xl font-serif font-bold text-white">{cat.name}</h3>
-                  <Link to={`/shop?category=${cat.id}`} className="text-gold-400 text-sm font-medium flex items-center space-x-1 group-hover:text-white transition-colors">
-                    <span>Explore Collection</span>
-                    <ChevronRight size={16} />
-                  </Link>
+                <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gray-50 flex items-center justify-center border border-gray-100 group-hover:border-gold-400 group-hover:bg-gold-50 transition-all duration-500 overflow-hidden">
+                  {cat.image ? (
+                    <img src={cat.image} alt={cat.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform" referrerPolicy="no-referrer" />
+                  ) : (
+                    getIcon(cat.name)
+                  )}
                 </div>
-              </motion.div>
-            ))
-          ) : (
-            // Placeholder categories if none in DB
-            ['Rings', 'Necklaces', 'Earrings'].map((name, i) => (
-              <div key={i} className="h-80 bg-gray-100 rounded-3xl animate-pulse" />
-            ))
-          )}
+                <span className="text-[10px] font-bold text-gray-900 uppercase tracking-widest group-hover:text-gold-600 transition-colors truncate w-full text-center">
+                  {cat.name}
+                </span>
+              </Link>
+            );
+          })}
         </div>
       </section>
 
@@ -328,8 +375,8 @@ const Home = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           <div className="flex justify-between items-end">
             <div className="space-y-4">
-              <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900">Featured Pieces</h2>
-              <p className="text-gray-500">Our most coveted designs, handpicked for their exceptional craftsmanship.</p>
+              <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900">{settings?.featuredSection?.title || "Featured Pieces"}</h2>
+              <p className="text-gray-500">{settings?.featuredSection?.description || "Our most coveted designs, handpicked for their exceptional craftsmanship."}</p>
             </div>
             <Link to="/shop" className="hidden md:flex items-center space-x-2 text-gold-600 font-semibold hover:text-gold-700 transition-colors">
               <span>View All Products</span>
@@ -337,17 +384,55 @@ const Home = () => {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
             {featuredProducts.length > 0 ? (
               featuredProducts.map(product => (
                 <ProductCard key={product.id} product={product} />
               ))
             ) : (
-              [1, 2, 3, 4].map(i => (
+              [1, 2, 3, 4, 5].map(i => (
                 <div key={i} className="aspect-[4/5] bg-white rounded-2xl animate-pulse" />
               ))
             )}
           </div>
+        </div>
+      </section>
+
+      {/* About Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="relative h-[600px] rounded-[3rem] overflow-hidden"
+          >
+            <img
+              src={settings?.about?.image || "https://images.unsplash.com/photo-1573408302185-06ff321cf6e6?auto=format&fit=crop&q=80&w=1000"}
+              alt="Our Story"
+              className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+            />
+            <div className="absolute inset-0 bg-gold-900/10" />
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="space-y-8"
+          >
+            <div className="space-y-4">
+              <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900">{settings?.about?.title || "Our Story"}</h2>
+              <div className="w-20 h-1 bg-gold-600" />
+            </div>
+            <p className="text-lg text-gray-600 leading-relaxed">
+              {settings?.about?.content || "Prahvi Jewelry was born out of a passion for creating beautiful, high-quality jewelry that everyone can afford."}
+            </p>
+            <Link to="/shop" className="inline-flex items-center space-x-2 text-gold-600 font-bold hover:text-gold-700 transition-colors group">
+              <span>Explore Our Collection</span>
+              <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </motion.div>
         </div>
       </section>
 
@@ -359,8 +444,8 @@ const Home = () => {
             <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-gold-600 blur-[120px] rounded-full" />
           </div>
           <div className="relative z-10 space-y-4 max-w-2xl mx-auto">
-            <h2 className="text-4xl md:text-5xl font-serif font-bold text-white">Join the Prahvi Circle</h2>
-            <p className="text-gray-400">Subscribe to receive exclusive offers, early access to new collections, and jewelry care tips.</p>
+            <h2 className="text-4xl md:text-5xl font-serif font-bold text-white">{settings?.newsletter?.title || "Join the Prahvi Circle"}</h2>
+            <p className="text-gray-400">{settings?.newsletter?.description || "Subscribe to receive exclusive offers, early access to new collections, and jewelry care tips."}</p>
             <form className="flex flex-col sm:flex-row gap-4 mt-8">
               <input
                 type="email"
@@ -428,7 +513,7 @@ const Shop = () => {
             <button
               key={cat.id}
               onClick={() => setSearchParams({ category: cat.id })}
-              className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${selectedCategory === cat.id ? 'bg-gold-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+              className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${selectedCategory === cat.id ? 'bg-gold-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
             >
               {cat.name}
             </button>
@@ -436,9 +521,9 @@ const Shop = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
         {loading ? (
-          [1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+          [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => (
             <div key={i} className="aspect-[4/5] bg-gray-100 rounded-2xl animate-pulse" />
           ))
         ) : products.length > 0 ? (
@@ -465,6 +550,7 @@ const ProductDetail = () => {
   const [activeImage, setActiveImage] = useState(0);
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
+  const [detailQuantity, setDetailQuantity] = useState(1);
 
   const [reviews, setReviews] = useState<Review[]>([]);
   const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
@@ -549,9 +635,16 @@ const ProductDetail = () => {
         {/* Info */}
         <div className="space-y-8">
           <div className="space-y-4">
-            <p className="text-gold-600 font-medium uppercase tracking-widest text-sm">{product.category}</p>
             <h1 className="text-5xl font-serif font-bold text-gray-900">{product.name}</h1>
-            <p className="text-3xl text-gold-700 font-medium">${product.price.toLocaleString()}</p>
+            <p className="text-3xl text-gold-700 font-medium">₹{product.price.toLocaleString()}</p>
+            {product.originalPrice && product.originalPrice > product.price && (
+              <div className="flex items-center space-x-3">
+                <p className="text-xl text-gray-400 line-through">₹{product.originalPrice.toLocaleString()}</p>
+                <span className="bg-red-100 text-red-600 px-2 py-1 rounded-lg text-sm font-bold">
+                  {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="prose prose-gold max-w-none">
@@ -559,26 +652,41 @@ const ProductDetail = () => {
           </div>
 
           <div className="space-y-6 pt-6 border-t border-gray-100">
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+              <div className="flex items-center bg-gray-50 rounded-2xl border border-gray-100 overflow-hidden h-16">
+                <button 
+                  onClick={() => setDetailQuantity(prev => Math.max(1, prev - 1))}
+                  className="px-6 h-full hover:bg-gray-100 transition-colors"
+                >
+                  <Minus size={20} />
+                </button>
+                <span className="w-12 text-center font-bold text-xl">{detailQuantity}</span>
+                <button 
+                  onClick={() => setDetailQuantity(prev => Math.min(product.stock, prev + 1))}
+                  className="px-6 h-full hover:bg-gray-100 transition-colors"
+                >
+                  <Plus size={20} />
+                </button>
+              </div>
               <button
                 onClick={() => {
-                  addToCart(product);
-                  toast.success("Added to cart!");
+                  addToCart(product, detailQuantity);
                 }}
                 disabled={product.stock === 0}
-                className="flex-grow bg-gray-900 text-white py-5 rounded-2xl font-bold hover:bg-gold-600 transition-all shadow-xl disabled:bg-gray-300 disabled:cursor-not-allowed"
+                className="flex-grow bg-gray-900 text-white h-16 rounded-2xl font-bold hover:bg-gold-600 transition-all shadow-xl disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
                 {product.stock > 0 ? 'Add to Shopping Bag' : 'Out of Stock'}
               </button>
               <button 
                 onClick={() => toggleWishlist(product.id)}
-                className={`p-5 border rounded-2xl transition-all ${isInWishlist(product.id) ? 'border-red-100 text-red-500 bg-red-50' : 'border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-100'}`}
+                className={`h-16 px-6 border rounded-2xl transition-all flex items-center justify-center ${isInWishlist(product.id) ? 'border-red-100 text-red-500 bg-red-50' : 'border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-100'}`}
               >
                 <Heart size={24} fill={isInWishlist(product.id) ? "currentColor" : "none"} />
               </button>
             </div>
+          </div>
 
-            <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4">
               <div className="p-4 bg-gray-50 rounded-2xl flex items-center space-x-3">
                 <Truck size={20} className="text-gold-600" />
                 <span className="text-sm font-medium text-gray-700">Free Express Delivery</span>
@@ -589,9 +697,10 @@ const ProductDetail = () => {
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Reviews Section */}
-          <div className="pt-12 space-y-12 border-t border-gray-100">
+        {/* Reviews Section */}
+        <div className="pt-12 space-y-12 border-t border-gray-100">
             <div className="flex justify-between items-center">
               <h3 className="text-2xl font-serif font-bold">Customer Reviews</h3>
               <div className="flex items-center space-x-2 text-gold-600">
@@ -659,10 +768,8 @@ const ProductDetail = () => {
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  );
-};
+      );
+    };
 
 const Cart = () => {
   const { cart, removeFromCart, updateQuantity, total } = useCart();
@@ -697,13 +804,13 @@ const Cart = () => {
               </div>
               <div className="flex-grow space-y-1">
                 <h3 className="text-lg font-serif font-bold">{item.name}</h3>
-                <p className="text-gold-600 font-medium">${item.price.toLocaleString()}</p>
+                <p className="text-gold-600 font-medium">₹{item.price.toLocaleString()}</p>
               </div>
               <div className="flex items-center space-x-4">
                 <div className="flex items-center border border-gray-200 rounded-lg">
-                  <button onClick={() => updateQuantity(item.productId, -1)} className="p-2 hover:bg-gray-50"><Minus size={16} /></button>
+                  <button onClick={() => updateQuantity(item.productId, item.quantity - 1)} className="p-2 hover:bg-gray-50"><Minus size={16} /></button>
                   <span className="w-8 text-center font-medium">{item.quantity}</span>
-                  <button onClick={() => updateQuantity(item.productId, 1)} className="p-2 hover:bg-gray-50"><Plus size={16} /></button>
+                  <button onClick={() => updateQuantity(item.productId, item.quantity + 1)} className="p-2 hover:bg-gray-50"><Plus size={16} /></button>
                 </div>
                 <button onClick={() => removeFromCart(item.productId)} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
                   <Trash2 size={20} />
@@ -719,7 +826,7 @@ const Cart = () => {
             <div className="space-y-4 text-sm">
               <div className="flex justify-between text-gray-600">
                 <span>Subtotal</span>
-                <span>${total.toLocaleString()}</span>
+                <span>₹{total.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-gray-600">
                 <span>Shipping</span>
@@ -727,7 +834,7 @@ const Cart = () => {
               </div>
               <div className="border-t border-gray-200 pt-4 flex justify-between text-lg font-bold text-gray-900">
                 <span>Total</span>
-                <span>${total.toLocaleString()}</span>
+                <span>₹{total.toLocaleString()}</span>
               </div>
             </div>
             <button
@@ -755,14 +862,16 @@ const Checkout = () => {
     phone: '',
     address: '',
   });
-  const [paymentMethod, setPaymentMethod] = useState<'whatsapp' | 'card'>('whatsapp');
+  const [paymentMethod, setPaymentMethod] = useState<'whatsapp' | 'card' | 'upi'>('whatsapp');
 
   useEffect(() => {
     if (settings.paymentModes) {
-      if (!settings.paymentModes.whatsapp && settings.paymentModes.card) {
-        setPaymentMethod('card');
-      } else if (settings.paymentModes.whatsapp) {
+      if (settings.paymentModes.whatsapp) {
         setPaymentMethod('whatsapp');
+      } else if (settings.paymentModes.upi) {
+        setPaymentMethod('upi');
+      } else if (settings.paymentModes.card) {
+        setPaymentMethod('card');
       }
     }
   }, [settings]);
@@ -786,9 +895,11 @@ const Checkout = () => {
       const docRef = await addDoc(collection(db, 'orders'), orderData);
       
       if (paymentMethod === 'whatsapp') {
-        const message = `Hello Prahvi Jewelry! I've just placed an order (ID: ${docRef.id}).\n\nItems:\n${cart.map(item => `- ${item.name} (x${item.quantity})`).join('\n')}\n\nTotal: $${total.toLocaleString()}\n\nPlease confirm my order.`;
-        const whatsappUrl = `https://wa.me/${settings.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+        const message = `Hello Prahvi Jewelry! I've just placed an order (ID: ${docRef.id}).\n\nItems:\n${cart.map(item => `- ${item.name} (x${item.quantity})`).join('\n')}\n\nTotal: ₹${total.toLocaleString()}\n\nPlease confirm my order.`;
+        const whatsappUrl = `https://wa.me/${(settings?.whatsapp || '').replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
         window.open(whatsappUrl, '_blank');
+      } else if (paymentMethod === 'upi') {
+        toast.success("Order placed! Please complete the UPI payment.");
       } else {
         // Simulate Stripe Checkout
         toast.info("Redirecting to secure payment gateway...");
@@ -863,7 +974,7 @@ const Checkout = () => {
 
           <div className="space-y-4">
             <label className="text-sm font-medium text-gray-700">Payment Method</label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {settings.paymentModes?.whatsapp && (
                 <button
                   type="button"
@@ -876,10 +987,27 @@ const Checkout = () => {
                     </div>
                     <div className="text-left">
                       <p className="text-sm font-bold">WhatsApp</p>
-                      <p className="text-xs text-gray-500">Confirm & Pay</p>
                     </div>
                   </div>
                   {paymentMethod === 'whatsapp' && <div className="w-4 h-4 rounded-full bg-gold-500" />}
+                </button>
+              )}
+
+              {settings.paymentModes?.upi && (
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod('upi')}
+                  className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${paymentMethod === 'upi' ? 'border-gold-500 bg-gold-50' : 'border-gray-100 hover:border-gray-200'}`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className={`p-2 rounded-lg ${paymentMethod === 'upi' ? 'bg-gold-200 text-gold-700' : 'bg-gray-100 text-gray-500'}`}>
+                      <LucideIcons.QrCode size={20} />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm font-bold">UPI / QR</p>
+                    </div>
+                  </div>
+                  {paymentMethod === 'upi' && <div className="w-4 h-4 rounded-full bg-gold-500" />}
                 </button>
               )}
 
@@ -894,8 +1022,7 @@ const Checkout = () => {
                       <CreditCard size={20} />
                     </div>
                     <div className="text-left">
-                      <p className="text-sm font-bold">Card Payment</p>
-                      <p className="text-xs text-gray-500">Secure Checkout</p>
+                      <p className="text-sm font-bold">Card</p>
                     </div>
                   </div>
                   {paymentMethod === 'card' && <div className="w-4 h-4 rounded-full bg-gold-500" />}
@@ -904,17 +1031,40 @@ const Checkout = () => {
             </div>
           </div>
 
+          {paymentMethod === 'upi' && (
+            <div className="p-6 bg-gray-50 rounded-2xl border border-gray-200 space-y-4 text-center">
+              <p className="text-sm font-medium text-gray-700">Scan QR Code to Pay</p>
+              {settings.upiQrCode ? (
+                <img src={settings.upiQrCode} alt="UPI QR Code" className="w-48 h-48 mx-auto rounded-xl border-4 border-white shadow-sm" />
+              ) : (
+                <div className="w-48 h-48 mx-auto bg-gray-200 rounded-xl flex items-center justify-center text-gray-400">
+                  <LucideIcons.QrCode size={48} />
+                </div>
+              )}
+              {settings.upiId && (
+                <div className="space-y-1">
+                  <p className="text-xs text-gray-500 uppercase tracking-widest">UPI ID</p>
+                  <p className="text-lg font-mono font-bold text-gray-900">{settings.upiId}</p>
+                </div>
+              )}
+              <p className="text-xs text-gray-500">After payment, click "Place Order" below. We will verify and confirm your order.</p>
+            </div>
+          )}
+
           <div className="pt-6 border-t border-gray-100">
             <div className="flex justify-between items-center mb-8">
               <span className="text-gray-600">Total Amount</span>
-              <span className="text-2xl font-bold text-gray-900">${total.toLocaleString()}</span>
+              <span className="text-2xl font-bold text-gray-900">₹{total.toLocaleString()}</span>
             </div>
             <button
               type="submit"
               disabled={loading}
               className="w-full bg-gold-600 text-white py-5 rounded-2xl font-bold hover:bg-gold-500 transition-all shadow-xl shadow-gold-600/20 disabled:bg-gray-300"
             >
-              {loading ? 'Processing...' : paymentMethod === 'whatsapp' ? 'Place Order & Confirm on WhatsApp' : 'Pay Now & Place Order'}
+              {loading ? 'Processing...' : 
+               paymentMethod === 'whatsapp' ? 'Place Order & Confirm on WhatsApp' : 
+               paymentMethod === 'upi' ? 'Place Order & Notify Admin' :
+               'Pay Now & Place Order'}
             </button>
           </div>
         </form>
@@ -925,7 +1075,7 @@ const Checkout = () => {
 
 const Contact = () => {
   const { settings } = useSettings();
-  const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
+  const [formData, setFormData] = useState({ name: '', email: '', phone: '', subject: '', message: '' });
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -937,7 +1087,7 @@ const Contact = () => {
         createdAt: serverTimestamp(),
       });
       toast.success("Message sent! We'll get back to you soon.");
-      setFormData({ name: '', email: '', subject: '', message: '' });
+      setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
     } catch (error) {
       toast.error("Failed to send message.");
     } finally {
@@ -998,6 +1148,17 @@ const Contact = () => {
               value={formData.email}
               onChange={e => setFormData({ ...formData, email: e.target.value })}
               className="w-full px-5 py-4 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-gold-500 outline-none transition-all"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">WhatsApp Number</label>
+            <input
+              required
+              type="text"
+              value={formData.phone}
+              onChange={e => setFormData({ ...formData, phone: e.target.value })}
+              className="w-full px-5 py-4 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-gold-500 outline-none transition-all"
+              placeholder="e.g. +91 98765 43210"
             />
           </div>
           <div className="space-y-2">
@@ -1126,8 +1287,20 @@ const Profile = () => {
                     <span className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full ${order.status === 'delivered' ? 'bg-green-100 text-green-700' : 'bg-gold-100 text-gold-700'}`}>
                       {order.status}
                     </span>
+                    {order.trackingNumber && (
+                      <div className="flex items-center space-x-2">
+                        <span className="text-[10px] font-mono text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                          {order.trackingNumber}
+                        </span>
+                        {order.trackingLink && (
+                          <a href={order.trackingLink} target="_blank" rel="noreferrer" className="text-blue-500 hover:text-blue-700" title="Track Order">
+                            <ExternalLink size={14} />
+                          </a>
+                        )}
+                      </div>
+                    )}
                     <a
-                      href={`https://wa.me/${settings.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(`Hello! I have a question about my order #${order.id.slice(-6)}`)}`}
+                      href={`https://wa.me/${(settings?.whatsapp || '').replace(/\D/g, '')}?text=${encodeURIComponent(`Hello! I have a question about my order #${order.id.slice(-6)}`)}`}
                       target="_blank"
                       rel="noreferrer"
                       className="p-2 text-green-600 hover:bg-green-50 rounded-full transition-all"
@@ -1152,6 +1325,23 @@ const Profile = () => {
 const AdminSettings = () => {
   const { settings, updateSettings, loading } = useSettings();
   const [formData, setFormData] = useState<StoreSettings>(settings);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, section: 'hero' | 'about' | 'upiQrCode') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const toastId = toast.loading("Uploading image...");
+    try {
+      const url = await uploadToImgBB(file);
+      if (section === 'upiQrCode') {
+        setFormData(prev => ({ ...prev, upiQrCode: url }));
+      } else {
+        setFormData(prev => ({ ...prev, [section]: { ...prev[section], image: url } }));
+      }
+      toast.success("Image uploaded!", { id: toastId });
+    } catch (error) {
+      toast.error("Upload failed", { id: toastId });
+    }
+  };
 
   useEffect(() => {
     setFormData(settings);
@@ -1179,35 +1369,45 @@ const AdminSettings = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Site Name</label>
+                <input type="text" value={formData.siteName || ''} onChange={e => setFormData({ ...formData, siteName: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" required />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Site Tagline</label>
+                <input type="text" value={formData.siteDescription || ''} onChange={e => setFormData({ ...formData, siteDescription: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" required />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100">
+              <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Store Email</label>
-                <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" required />
+                <input type="email" value={formData.email || ''} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" required />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Phone Number</label>
-                <input type="text" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" required />
+                <input type="text" value={formData.phone || ''} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" required />
               </div>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Store Address</label>
-              <textarea value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" rows={2} required />
+              <textarea value={formData.address || ''} onChange={e => setFormData({ ...formData, address: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" rows={2} required />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Working Hours</label>
-              <input type="text" value={formData.workingHours} onChange={e => setFormData({ ...formData, workingHours: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" required />
+              <input type="text" value={formData.workingHours || ''} onChange={e => setFormData({ ...formData, workingHours: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" required />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Instagram URL</label>
-                <input type="text" value={formData.instagram} onChange={e => setFormData({ ...formData, instagram: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+                <input type="text" value={formData.instagram || ''} onChange={e => setFormData({ ...formData, instagram: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Facebook URL</label>
-                <input type="text" value={formData.facebook} onChange={e => setFormData({ ...formData, facebook: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+                <input type="text" value={formData.facebook || ''} onChange={e => setFormData({ ...formData, facebook: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
               </div>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">WhatsApp Number (with country code)</label>
-              <input type="text" value={formData.whatsapp} onChange={e => setFormData({ ...formData, whatsapp: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+              <input type="text" value={formData.whatsapp || ''} onChange={e => setFormData({ ...formData, whatsapp: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
             </div>
 
             <div className="pt-6 border-t border-gray-100 space-y-4">
@@ -1231,8 +1431,49 @@ const AdminSettings = () => {
                   />
                   <span className="text-sm font-medium">Card Payment (Demo)</span>
                 </label>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.paymentModes?.upi}
+                    onChange={e => setFormData({ ...formData, paymentModes: { ...formData.paymentModes, upi: e.target.checked } })}
+                    className="w-5 h-5 rounded text-gold-600 focus:ring-gold-500"
+                  />
+                  <span className="text-sm font-medium">UPI / QR Payment</span>
+                </label>
               </div>
             </div>
+
+            {formData.paymentModes?.upi && (
+              <div className="pt-6 border-t border-gray-100 space-y-6">
+                <h4 className="font-bold">UPI Configuration</h4>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">UPI ID (e.g., yourname@okaxis)</label>
+                  <input type="text" value={formData.upiId || ''} onChange={e => setFormData({ ...formData, upiId: e.target.value })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">UPI QR Code Image URL</label>
+                  <div className="flex space-x-4">
+                    <input type="text" value={formData.upiQrCode || ''} onChange={e => setFormData({ ...formData, upiQrCode: e.target.value })} className="flex-grow px-4 py-2 rounded-xl border border-gray-200 outline-none" placeholder="Paste image URL here" />
+                    <div className="relative">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={e => handleImageUpload(e, 'upiQrCode')}
+                        className="hidden"
+                        id="qr-upload"
+                      />
+                      <label htmlFor="qr-upload" className="px-4 py-2 bg-gray-100 rounded-xl cursor-pointer hover:bg-gray-200 transition-all flex items-center space-x-2">
+                        <Upload size={18} />
+                        <span>Upload</span>
+                      </label>
+                    </div>
+                  </div>
+                  {formData.upiQrCode && (
+                    <img src={formData.upiQrCode} alt="QR Preview" className="w-32 h-32 object-contain rounded-lg border border-gray-200 mt-2" />
+                  )}
+                </div>
+              </div>
+            )}
 
             <button type="submit" className="w-full bg-gray-900 text-white py-3 rounded-xl font-bold hover:bg-gold-600 transition-all">
               Save Settings
@@ -1241,7 +1482,138 @@ const AdminSettings = () => {
         </div>
 
         <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-6">
-          <h3 className="text-xl font-serif font-bold">Features Section</h3>
+          <h3 className="text-xl font-serif font-bold">Hero Section</h3>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Hero Title</label>
+              <input type="text" value={formData.hero?.title || ''} onChange={e => setFormData({ ...formData, hero: { ...formData.hero, title: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Hero Subtitle</label>
+              <input type="text" value={formData.hero?.subtitle || ''} onChange={e => setFormData({ ...formData, hero: { ...formData.hero, subtitle: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Hero Description</label>
+              <textarea value={formData.hero?.description || ''} onChange={e => setFormData({ ...formData, hero: { ...formData.hero, description: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" rows={3} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Hero Image</label>
+              <div className="flex items-center space-x-4">
+                <input type="text" value={formData.hero?.image || ''} onChange={e => setFormData({ ...formData, hero: { ...formData.hero, image: e.target.value } })} className="flex-grow px-4 py-2 rounded-xl border border-gray-200 outline-none" placeholder="Image URL" />
+                <input type="file" accept="image/*" onChange={e => handleImageUpload(e, 'hero')} className="hidden" id="hero-upload" />
+                <label htmlFor="hero-upload" className="p-2 bg-gray-100 rounded-xl cursor-pointer hover:bg-gray-200 transition-all">
+                  <Upload size={20} />
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <h3 className="text-xl font-serif font-bold pt-6 border-t border-gray-100">About Section</h3>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">About Title</label>
+              <input type="text" value={formData.about?.title || ''} onChange={e => setFormData({ ...formData, about: { ...formData.about, title: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">About Content</label>
+              <textarea value={formData.about?.content || ''} onChange={e => setFormData({ ...formData, about: { ...formData.about, content: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" rows={5} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">About Image</label>
+              <div className="flex items-center space-x-4">
+                <input type="text" value={formData.about?.image || ''} onChange={e => setFormData({ ...formData, about: { ...formData.about, image: e.target.value } })} className="flex-grow px-4 py-2 rounded-xl border border-gray-200 outline-none" placeholder="Image URL" />
+                <input type="file" accept="image/*" onChange={e => handleImageUpload(e, 'about')} className="hidden" id="about-upload" />
+                <label htmlFor="about-upload" className="p-2 bg-gray-100 rounded-xl cursor-pointer hover:bg-gray-200 transition-all">
+                  <Upload size={20} />
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <h3 className="text-xl font-serif font-bold pt-6 border-t border-gray-100">Quick Links</h3>
+          <p className="text-sm text-gray-500">Manage the links shown in the footer.</p>
+          <div className="space-y-4">
+            {(formData.quickLinks || []).map((link, i) => (
+              <div key={i} className="flex items-center space-x-4">
+                <input
+                  type="text"
+                  value={link.name}
+                  onChange={e => {
+                    const newLinks = [...(formData.quickLinks || [])];
+                    newLinks[i].name = e.target.value;
+                    setFormData({ ...formData, quickLinks: newLinks });
+                  }}
+                  className="flex-grow px-4 py-2 rounded-xl border border-gray-200 outline-none"
+                  placeholder="Link Name"
+                />
+                <input
+                  type="text"
+                  value={link.path}
+                  onChange={e => {
+                    const newLinks = [...(formData.quickLinks || [])];
+                    newLinks[i].path = e.target.value;
+                    setFormData({ ...formData, quickLinks: newLinks });
+                  }}
+                  className="flex-grow px-4 py-2 rounded-xl border border-gray-200 outline-none"
+                  placeholder="Path (e.g. /shop)"
+                />
+                <button
+                  onClick={() => {
+                    const newLinks = (formData.quickLinks || []).filter((_, idx) => idx !== i);
+                    setFormData({ ...formData, quickLinks: newLinks });
+                  }}
+                  className="p-2 text-red-500 hover:bg-red-50 rounded-xl"
+                >
+                  <Trash2 size={20} />
+                </button>
+              </div>
+            ))}
+            <button
+              onClick={() => setFormData({ ...formData, quickLinks: [...(formData.quickLinks || []), { name: '', path: '' }] })}
+              className="flex items-center space-x-2 text-gold-600 font-bold hover:text-gold-700"
+            >
+              <Plus size={18} />
+              <span>Add Link</span>
+            </button>
+          </div>
+
+          <h3 className="text-xl font-serif font-bold pt-6 border-t border-gray-100">Category Section</h3>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Category Section Title</label>
+              <input type="text" value={formData.categorySection?.title || ''} onChange={e => setFormData({ ...formData, categorySection: { ...formData.categorySection, title: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Category Section Description</label>
+              <textarea value={formData.categorySection?.description || ''} onChange={e => setFormData({ ...formData, categorySection: { ...formData.categorySection, description: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" rows={2} />
+            </div>
+          </div>
+
+          <h3 className="text-xl font-serif font-bold pt-6 border-t border-gray-100">Newsletter Section</h3>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Newsletter Title</label>
+              <input type="text" value={formData.newsletter?.title || ''} onChange={e => setFormData({ ...formData, newsletter: { ...formData.newsletter, title: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Newsletter Description</label>
+              <textarea value={formData.newsletter?.description || ''} onChange={e => setFormData({ ...formData, newsletter: { ...formData.newsletter, description: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" rows={2} />
+            </div>
+          </div>
+
+          <h3 className="text-xl font-serif font-bold pt-6 border-t border-gray-100">Featured Section</h3>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Featured Section Title</label>
+              <input type="text" value={formData.featuredSection?.title || ''} onChange={e => setFormData({ ...formData, featuredSection: { ...formData.featuredSection, title: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Featured Section Description</label>
+              <textarea value={formData.featuredSection?.description || ''} onChange={e => setFormData({ ...formData, featuredSection: { ...formData.featuredSection, description: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" rows={2} />
+            </div>
+          </div>
+
+          <h3 className="text-xl font-serif font-bold pt-6 border-t border-gray-100">Features Section</h3>
           <p className="text-sm text-gray-500">Edit the features shown on the homepage.</p>
           <div className="space-y-6">
             {(formData.features || []).map((feature, i) => (
@@ -1251,7 +1623,7 @@ const AdminSettings = () => {
                     <label className="text-xs font-bold text-gray-400 uppercase">Icon (Lucide Name)</label>
                     <input
                       type="text"
-                      value={feature.icon}
+                      value={feature.icon || ''}
                       onChange={e => updateFeature(i, 'icon', e.target.value)}
                       className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm"
                       placeholder="Star, Truck, Shield, etc."
@@ -1261,7 +1633,7 @@ const AdminSettings = () => {
                     <label className="text-xs font-bold text-gray-400 uppercase">Title</label>
                     <input
                       type="text"
-                      value={feature.title}
+                      value={feature.title || ''}
                       onChange={e => updateFeature(i, 'title', e.target.value)}
                       className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm"
                     />
@@ -1271,7 +1643,7 @@ const AdminSettings = () => {
                   <label className="text-xs font-bold text-gray-400 uppercase">Description</label>
                   <input
                     type="text"
-                    value={feature.desc}
+                    value={feature.desc || ''}
                     onChange={e => updateFeature(i, 'desc', e.target.value)}
                     className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm"
                   />
@@ -1393,7 +1765,7 @@ const AdminHome = () => {
   const statCards = [
     { name: 'Total Products', value: stats.products, icon: Package, color: 'text-blue-600', bg: 'bg-blue-50' },
     { name: 'Total Orders', value: stats.orders, icon: ShoppingBag, color: 'text-green-600', bg: 'bg-green-50' },
-    { name: 'Total Revenue', value: `$${stats.totalRevenue.toLocaleString()}`, icon: TrendingUp, color: 'text-gold-600', bg: 'bg-gold-50' },
+    { name: 'Total Revenue', value: `₹${stats.totalRevenue.toLocaleString()}`, icon: TrendingUp, color: 'text-gold-600', bg: 'bg-gold-50' },
     { name: 'Pending Orders', value: stats.pendingOrders, icon: RefreshCcw, color: 'text-orange-600', bg: 'bg-orange-50' },
   ];
 
@@ -1493,31 +1865,13 @@ const AdminHome = () => {
   );
 };
 
-const uploadToImgBB = async (file: File) => {
-  const apiKey = (import.meta as any).env.VITE_IMGBB_API_KEY || '1ee43179b21bce887d7a14af6e26f788';
-  const formData = new FormData();
-  formData.append('image', file);
-  
-  const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
-    method: 'POST',
-    body: formData
-  });
-  
-  const result = await response.json();
-  if (result.success) {
-    return result.data.url;
-  } else {
-    throw new Error(result.error?.message || 'Upload failed');
-  }
-};
-
 const AdminProducts = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState({
-    name: '', description: '', price: 0, category: '', images: '', stock: 0, featured: false
+    name: '', description: '', price: 0, originalPrice: 0, category: '', images: '', stock: 0, featured: false
   });
 
   useEffect(() => {
@@ -1556,7 +1910,7 @@ const AdminProducts = () => {
     e.preventDefault();
     const data = {
       ...formData,
-      images: formData.images.split(',').map(s => s.trim()),
+      images: (formData.images || '').split(',').map(s => s.trim()).filter(Boolean),
       createdAt: serverTimestamp()
     };
 
@@ -1585,7 +1939,7 @@ const AdminProducts = () => {
         <button
           onClick={() => {
             setEditingProduct(null);
-            setFormData({ name: '', description: '', price: 0, category: '', images: '', stock: 0, featured: false });
+            setFormData({ name: '', description: '', price: 0, originalPrice: 0, category: '', images: '', stock: 0, featured: false });
             setIsModalOpen(true);
           }}
           className="bg-gray-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-gold-600 transition-all flex items-center space-x-2"
@@ -1602,6 +1956,7 @@ const AdminProducts = () => {
               <th className="px-6 py-4 text-xs uppercase tracking-widest font-bold text-gray-500">Product</th>
               <th className="px-6 py-4 text-xs uppercase tracking-widest font-bold text-gray-500">Category</th>
               <th className="px-6 py-4 text-xs uppercase tracking-widest font-bold text-gray-500">Price</th>
+              <th className="px-6 py-4 text-xs uppercase tracking-widest font-bold text-gray-500">Discount</th>
               <th className="px-6 py-4 text-xs uppercase tracking-widest font-bold text-gray-500">Stock</th>
               <th className="px-6 py-4 text-xs uppercase tracking-widest font-bold text-gray-500">Actions</th>
             </tr>
@@ -1616,14 +1971,39 @@ const AdminProducts = () => {
                   </div>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-600">{product.category}</td>
-                <td className="px-6 py-4 text-sm font-medium text-gold-600">${product.price.toLocaleString()}</td>
+                <td className="px-6 py-4">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-gold-600">₹{product.price.toLocaleString()}</p>
+                    {product.originalPrice && product.originalPrice > product.price && (
+                      <p className="text-xs text-gray-400 line-through">₹{product.originalPrice.toLocaleString()}</p>
+                    )}
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  {product.originalPrice && product.originalPrice > product.price ? (
+                    <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                      {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
+                    </span>
+                  ) : (
+                    <span className="text-xs text-gray-400">-</span>
+                  )}
+                </td>
                 <td className="px-6 py-4 text-sm text-gray-600">{product.stock}</td>
                 <td className="px-6 py-4">
                   <div className="flex items-center space-x-3">
                     <button
                       onClick={() => {
                         setEditingProduct(product);
-                        setFormData({ ...product, images: product.images.join(', ') });
+                        setFormData({
+                          name: product.name || '',
+                          description: product.description || '',
+                          price: product.price || 0,
+                          originalPrice: product.originalPrice || 0,
+                          category: product.category || '',
+                          images: (product.images || []).join(', '),
+                          stock: product.stock || 0,
+                          featured: product.featured || false
+                        });
                         setIsModalOpen(true);
                       }}
                       className="p-2 text-gray-400 hover:text-gold-600 transition-colors"
@@ -1675,29 +2055,62 @@ const AdminProducts = () => {
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-2 col-span-2">
                     <label className="text-sm font-medium">Product Name</label>
-                    <input required type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200" />
+                    <input required type="text" value={formData.name || ''} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200" />
                   </div>
                   <div className="space-y-2 col-span-2">
                     <label className="text-sm font-medium">Description</label>
-                    <textarea required rows={3} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200" />
+                    <textarea required rows={3} value={formData.description || ''} onChange={e => setFormData({ ...formData, description: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Price ($)</label>
-                    <input required type="number" value={formData.price} onChange={e => setFormData({ ...formData, price: Number(e.target.value) })} className="w-full px-4 py-3 rounded-xl border border-gray-200" />
+                    <label className="text-sm font-medium">Original Price (₹)</label>
+                    <input 
+                      type="number" 
+                      value={formData.originalPrice || 0} 
+                      onChange={e => {
+                        const original = Number(e.target.value);
+                        setFormData({ ...formData, originalPrice: original });
+                      }} 
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200" 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Discount (%)</label>
+                    <input 
+                      type="number" 
+                      value={(formData.originalPrice && formData.originalPrice > 0) ? Math.round(((formData.originalPrice - (formData.price || 0)) / formData.originalPrice) * 100) : 0} 
+                      onChange={e => {
+                        const discount = Number(e.target.value);
+                        if (formData.originalPrice && formData.originalPrice > 0) {
+                          const newPrice = Math.round(formData.originalPrice * (1 - discount / 100));
+                          setFormData({ ...formData, price: newPrice });
+                        }
+                      }} 
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200" 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Selling Price (₹)</label>
+                    <input 
+                      required 
+                      type="number" 
+                      value={formData.price || 0} 
+                      onChange={e => setFormData({ ...formData, price: Number(e.target.value) })} 
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200" 
+                    />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Stock</label>
-                    <input required type="number" value={formData.stock} onChange={e => setFormData({ ...formData, stock: Number(e.target.value) })} className="w-full px-4 py-3 rounded-xl border border-gray-200" />
+                    <input required type="number" value={formData.stock || 0} onChange={e => setFormData({ ...formData, stock: Number(e.target.value) })} className="w-full px-4 py-3 rounded-xl border border-gray-200" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Category</label>
-                    <select required value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200">
+                    <select required value={formData.category || ''} onChange={e => setFormData({ ...formData, category: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200">
                       <option value="">Select Category</option>
                       {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
                   </div>
                   <div className="flex items-center space-x-3 pt-8">
-                    <input type="checkbox" checked={formData.featured} onChange={e => setFormData({ ...formData, featured: e.target.checked })} className="w-5 h-5 rounded text-gold-600 focus:ring-gold-500" />
+                    <input type="checkbox" checked={formData.featured || false} onChange={e => setFormData({ ...formData, featured: e.target.checked })} className="w-5 h-5 rounded text-gold-600 focus:ring-gold-500" />
                     <label className="text-sm font-medium">Featured Product</label>
                   </div>
                   <div className="space-y-2 col-span-2">
@@ -1727,7 +2140,7 @@ const AdminProducts = () => {
                         <label className="text-xs text-gray-500">Or Paste URLs (comma separated)</label>
                         <textarea
                           rows={2}
-                          value={formData.images}
+                          value={formData.images || ''}
                           onChange={e => setFormData({ ...formData, images: e.target.value })}
                           className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm"
                           placeholder="https://example.com/img1.jpg"
@@ -1802,14 +2215,14 @@ const AdminCategories = () => {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
         {categories.map(cat => (
-          <div key={cat.id} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
-            <img src={cat.image} className="w-full h-40 object-cover rounded-xl" alt="" />
+          <div key={cat.id} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm space-y-3">
+            <img src={cat.image || 'https://picsum.photos/seed/jewelry/400/300'} className="w-full h-32 object-cover rounded-xl" alt="" />
             <div className="flex justify-between items-start">
-              <div>
-                <h3 className="text-lg font-bold">{cat.name}</h3>
-                <p className="text-sm text-gray-500 line-clamp-2">{cat.description}</p>
+              <div className="min-w-0">
+                <h3 className="text-sm font-bold truncate">{cat.name}</h3>
+                <p className="text-[10px] text-gray-500 line-clamp-1">{cat.description}</p>
               </div>
               <button
                 onClick={async () => {
@@ -1837,16 +2250,16 @@ const AdminCategories = () => {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Category Name</label>
-                  <input required type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200" />
+                  <input required type="text" value={formData.name || ''} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Description</label>
-                  <textarea rows={2} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200" />
+                  <textarea rows={2} value={formData.description || ''} onChange={e => setFormData({ ...formData, description: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Category Image</label>
                   <div className="flex items-center space-x-4">
-                    <input type="text" required value={formData.image} onChange={e => setFormData({ ...formData, image: e.target.value })} className="flex-grow px-4 py-3 rounded-xl border border-gray-200" placeholder="URL or upload ->" />
+                    <input type="text" required value={formData.image || ''} onChange={e => setFormData({ ...formData, image: e.target.value })} className="flex-grow px-4 py-3 rounded-xl border border-gray-200" placeholder="URL or upload ->" />
                     <label className="cursor-pointer p-3 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">
                       <Upload size={20} className={isUploading ? 'animate-bounce' : ''} />
                       <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={isUploading} />
@@ -1878,16 +2291,37 @@ const AdminOrders = () => {
 
   const updateStatus = async (orderId: string, newStatus: Order['status']) => {
     try {
-      await updateDoc(doc(db, 'orders', orderId), { status: newStatus });
-      setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+      let trackingData: { trackingNumber?: string; trackingLink?: string } = {};
+      if (newStatus === 'shipped') {
+        const trackingNumber = window.prompt("Enter Tracking Number:");
+        if (trackingNumber) {
+          const trackingLink = window.prompt("Enter Tracking Link (Optional):", `https://www.delhivery.com/track/package/${trackingNumber}`);
+          trackingData = { trackingNumber, trackingLink: trackingLink || '' };
+        }
+      }
+      
+      await updateDoc(doc(db, 'orders', orderId), { status: newStatus, ...trackingData });
+      setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus, ...trackingData } : o));
       toast.success("Status updated!");
+      
+      if (newStatus === 'shipped') {
+        const order = orders.find(o => o.id === orderId);
+        if (order) {
+          const message = `Hello ${order.customerName}! Your order #${order.id.slice(-6)} has been SHIPPED.${trackingData.trackingNumber ? `\n\nTracking Number: ${trackingData.trackingNumber}${trackingData.trackingLink ? `\nTrack here: ${trackingData.trackingLink}` : ''}` : ''}\n\nThank you for shopping with us!`;
+          const url = `https://wa.me/${order.customerPhone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+          window.open(url, '_blank');
+        }
+      }
     } catch (error) {
       toast.error("Update failed");
     }
   };
 
   const sendWhatsAppUpdate = (order: Order) => {
-    const message = `Hello ${order.customerName}! This is Prahvi Jewelry. Your order (ID: ${order.id}) status has been updated to: ${order.status.toUpperCase()}.\n\nThank you for shopping with us!`;
+    let message = `Hello ${order.customerName}! This is Prahvi Jewelry. Your order (ID: ${order.id}) status has been updated to: ${order.status.toUpperCase()}.\n\nThank you for shopping with us!`;
+    if (order.status === 'shipped' && order.trackingNumber) {
+      message = `Hello ${order.customerName}! Your order #${order.id.slice(-6)} status is SHIPPED.\n\nTracking Number: ${order.trackingNumber}${order.trackingLink ? `\nTrack here: ${order.trackingLink}` : ''}\n\nThank you!`;
+    }
     const url = `https://wa.me/${order.customerPhone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
   };
@@ -1913,8 +2347,20 @@ const AdminOrders = () => {
                 <td className="px-6 py-4">
                   <div className="text-sm font-medium text-gray-900">{order.customerName}</div>
                   <div className="text-xs text-gray-500">{order.customerPhone}</div>
+                  {order.trackingNumber && (
+                    <div className="mt-1 flex items-center space-x-2">
+                      <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-mono">
+                        {order.trackingNumber}
+                      </span>
+                      {order.trackingLink && (
+                        <a href={order.trackingLink} target="_blank" rel="noreferrer" className="text-blue-500 hover:text-blue-700">
+                          <ExternalLink size={12} />
+                        </a>
+                      )}
+                    </div>
+                  )}
                 </td>
-                <td className="px-6 py-4 text-sm font-medium text-gold-600">${order.total.toLocaleString()}</td>
+                <td className="px-6 py-4 text-sm font-medium text-gold-600">₹{order.total.toLocaleString()}</td>
                 <td className="px-6 py-4">
                   <select
                     value={order.status}
@@ -1933,13 +2379,30 @@ const AdminOrders = () => {
                   </select>
                 </td>
                 <td className="px-6 py-4">
-                  <button
-                    onClick={() => sendWhatsAppUpdate(order)}
-                    className="flex items-center space-x-2 text-xs font-bold text-green-600 hover:text-green-700 bg-green-50 px-3 py-1 rounded-full transition-all"
-                  >
-                    <Phone size={14} />
-                    <span>WhatsApp Update</span>
-                  </button>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => sendWhatsAppUpdate(order)}
+                      className="flex items-center space-x-2 text-xs font-bold text-green-600 hover:text-green-700 bg-green-50 px-3 py-1 rounded-full transition-all"
+                    >
+                      <Phone size={14} />
+                      <span>WhatsApp</span>
+                    </button>
+                    <button
+                      onClick={async () => {
+                        const num = window.prompt("Edit Tracking Number:", order.trackingNumber || "");
+                        if (num !== null) {
+                          const link = window.prompt("Edit Tracking Link:", order.trackingLink || `https://www.delhivery.com/track/package/${num}`);
+                          await updateDoc(doc(db, 'orders', order.id), { trackingNumber: num, trackingLink: link || "" });
+                          setOrders(orders.map(o => o.id === order.id ? { ...o, trackingNumber: num, trackingLink: link || "" } : o));
+                          toast.success("Tracking updated!");
+                        }
+                      }}
+                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-all"
+                      title="Edit Tracking Info"
+                    >
+                      <Truck size={14} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -2052,7 +2515,7 @@ const AdminPolicies = () => {
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Policy Type</label>
               <select
-                value={formData.type}
+                value={formData.type || ''}
                 onChange={e => setFormData({ ...formData, type: e.target.value })}
                 className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none"
                 required
@@ -2067,7 +2530,7 @@ const AdminPolicies = () => {
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Content</label>
               <textarea
-                value={formData.content}
+                value={formData.content || ''}
                 onChange={e => setFormData({ ...formData, content: e.target.value })}
                 className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none h-64"
                 required
@@ -2128,7 +2591,14 @@ const AdminMessages = () => {
             <div className="flex justify-between items-start">
               <div className="space-y-1">
                 <h4 className="font-bold text-lg">{msg.name}</h4>
-                <p className="text-sm text-gold-600">{msg.email}</p>
+                <div className="flex items-center space-x-4">
+                  <p className="text-sm text-gold-600">{msg.email}</p>
+                  <span className="text-gray-300">|</span>
+                  <p className="text-sm text-gold-600 flex items-center space-x-1">
+                    <LucideIcons.Phone size={14} />
+                    <span>{msg.phone}</span>
+                  </p>
+                </div>
                 <p className="text-xs text-gray-400">{new Date(msg.createdAt?.toDate()).toLocaleString()}</p>
               </div>
               <button onClick={async () => { if(window.confirm("Delete message?")) { await deleteDoc(doc(db, 'contact_messages', msg.id)); setMessages(messages.filter(m => m.id !== msg.id)); toast.success("Message deleted"); } }} className="text-gray-400 hover:text-red-500">
@@ -2136,7 +2606,7 @@ const AdminMessages = () => {
               </button>
             </div>
             <div className="bg-gray-50 p-4 rounded-xl">
-              <p className="text-sm text-gray-700 leading-relaxed">{msg.message}</p>
+              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{msg.message}</p>
             </div>
           </div>
         ))}
@@ -2225,6 +2695,7 @@ export default function App() {
                   <Route path="/policies/:type" element={<Policies />} />
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/admin/*" element={<AdminDashboard />} />
+                  <Route path="*" element={<Home />} />
                 </Routes>
               </main>
               <Footer />
