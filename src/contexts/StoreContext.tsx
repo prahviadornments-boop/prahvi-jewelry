@@ -169,6 +169,10 @@ const defaultSettings: StoreSettings = {
   instagram: '#',
   facebook: '#',
   whatsapp: '+15551234567',
+  announcementBar: {
+    text: '✨ Free Shipping on all orders above ₹2000! ✨',
+    enabled: true
+  },
   hero: {
     title: 'Elevate Your Everyday Style',
     subtitle: 'Premium Style. Affordable Luxury.',
@@ -197,6 +201,11 @@ const defaultSettings: StoreSettings = {
     { icon: 'Truck', title: "Free Shipping", desc: "On all orders over $500" },
     { icon: 'Shield', title: "Secure Payment", desc: "100% encrypted transactions" },
     { icon: 'RefreshCcw', title: "Easy Returns", desc: "30-day money back guarantee" },
+  ],
+  testimonials: [
+    { name: "Ananya Sharma", content: "The quality of the jewelry is exceptional. I bought a necklace for my sister and she absolutely loved it!", rating: 5 },
+    { name: "Rahul Verma", content: "Great customer service and fast delivery. Highly recommended for premium jewelry.", rating: 5 },
+    { name: "Priya Singh", content: "Beautiful designs and very affordable. I will definitely be buying more!", rating: 4 }
   ],
   paymentModes: {
     whatsapp: true,
