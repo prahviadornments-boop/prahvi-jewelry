@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 
 interface CartContextType {
   cart: OrderItem[];
-  addToCart: (product: Product) => void;
+  addToCart: (product: Product, quantity?: number) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -34,15 +34,23 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('cart', JSON.stringify(cart));
   }, [cart]);
 
-  const addToCart = (product: Product) => {
+  const addToCart = (product: Product, quantity: number = 1) => {
     setCart(prev => {
       const existing = prev.find(item => item.productId === product.id);
+      const newQuantity = existing ? existing.quantity + quantity : quantity;
+
+      if (newQuantity > product.stock) {
+        toast.error(`Only ${product.stock} items available in stock.`);
+        return prev;
+      }
+
+      toast.success("Added to cart!");
       if (existing) {
         return prev.map(item =>
-          item.productId === product.id ? { ...item, quantity: item.quantity + 1 } : item
+          item.productId === product.id ? { ...item, quantity: newQuantity } : item
         );
       }
-      return [...prev, { productId: product.id, name: product.name, price: product.price, quantity: 1, image: product.images[0] }];
+      return [...prev, { productId: product.id, name: product.name, price: product.price, quantity, image: product.images[0], stock: product.stock }];
     });
   };
 
@@ -52,9 +60,17 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateQuantity = (productId: string, quantity: number) => {
     if (quantity < 1) return;
-    setCart(prev => prev.map(item =>
-      item.productId === productId ? { ...item, quantity } : item
-    ));
+    setCart(prev => prev.map(item => {
+      if (item.productId === productId) {
+        // Only check stock if increasing quantity
+        if (quantity > item.quantity && item.stock !== undefined && item.stock !== null && quantity > item.stock) {
+          toast.error(`Only ${item.stock} items available in stock.`);
+          return item;
+        }
+        return { ...item, quantity };
+      }
+      return item;
+    }));
   };
 
   const clearCart = () => setCart([]);
@@ -144,6 +160,8 @@ interface SettingsContextType {
 }
 
 const defaultSettings: StoreSettings = {
+  siteName: 'Prahvi Jewelry',
+  siteDescription: 'Premium Style. Affordable Luxury.',
   address: '123 Jewelry Lane, Diamond District, New York, NY 10001',
   phone: '+1 (555) 123-4567',
   email: 'hello@prahvi.com',
@@ -151,6 +169,29 @@ const defaultSettings: StoreSettings = {
   instagram: '#',
   facebook: '#',
   whatsapp: '+15551234567',
+  hero: {
+    title: 'Elevate Your Everyday Style',
+    subtitle: 'Premium Style. Affordable Luxury.',
+    description: 'Modern, trendy jewellery designed to elevate your everyday style. Shine effortlessly from daily wear to special occasions without overspending.',
+    image: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&q=80&w=2000'
+  },
+  about: {
+    title: 'Our Story',
+    content: 'Prahvi Jewelry was born out of a passion for creating beautiful, high-quality jewelry that everyone can afford. We believe that luxury should be accessible, not exclusive. Our pieces are carefully crafted to bring a touch of elegance to your everyday life.',
+    image: 'https://images.unsplash.com/photo-1573408302185-06ff321cf6e6?auto=format&fit=crop&q=80&w=1000'
+  },
+  categorySection: {
+    title: 'Shop by Category',
+    description: 'Explore our diverse range of jewelry pieces, each category telling its own unique story of luxury.'
+  },
+  newsletter: {
+    title: 'Join the World of Prahvi',
+    description: 'Subscribe to receive updates, access to exclusive deals, and more.'
+  },
+  featuredSection: {
+    title: 'Featured Pieces',
+    description: 'Our most coveted designs, handpicked for their exceptional craftsmanship.'
+  },
   features: [
     { icon: 'Star', title: "Premium Quality", desc: "Certified diamonds & 18k gold" },
     { icon: 'Truck', title: "Free Shipping", desc: "On all orders over $500" },
@@ -159,8 +200,11 @@ const defaultSettings: StoreSettings = {
   ],
   paymentModes: {
     whatsapp: true,
-    card: true
-  }
+    card: true,
+    upi: true
+  },
+  upiId: '',
+  upiQrCode: ''
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
