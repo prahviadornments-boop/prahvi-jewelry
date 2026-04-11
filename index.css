@@ -6,7 +6,7 @@ import { doc, getDoc, collection, query, where, limit, getDocs, addDoc, serverTi
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Toaster, toast } from 'sonner';
 import * as LucideIcons from 'lucide-react';
-import { ShoppingCart, User as UserIcon, Menu, X, Phone, Instagram, Facebook, Mail, MapPin, ChevronRight, Star, Trash2, Plus, Minus, Heart, Shield, Truck, RefreshCcw, LayoutDashboard, Package, ListTree, ShoppingBag, MessageSquare, Settings, LogOut, ExternalLink, Upload, AlertTriangle, TrendingUp, CreditCard } from 'lucide-react';
+import { ShoppingCart, User as UserIcon, Menu, X, Phone, Instagram, Facebook, Mail, MapPin, ChevronRight, Star, Trash2, Plus, Minus, Heart, Shield, Truck, RefreshCcw, LayoutDashboard, Package, ListTree, ShoppingBag, MessageSquare, Settings, LogOut, ExternalLink, Upload, AlertTriangle, TrendingUp, CreditCard, Sparkles, Coins, Diamond, Flower, Circle, Watch, Hexagon, Gift, MoreHorizontal } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Product, Category, Order, Review, Policy, ContactMessage, OrderItem, StoreSettings, Feature } from './types';
@@ -313,45 +313,47 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Categories */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-        <div className="text-center space-y-4">
-          <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900">{settings?.categorySection?.title || "Shop by Category"}</h2>
-          <p className="text-gray-500 max-w-xl mx-auto">{settings?.categorySection?.description || "Explore our diverse range of jewelry pieces."}</p>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-          {categories.length > 0 ? (
-            categories.map((cat, i) => (
-              <motion.div
-                key={cat.id}
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="group relative h-48 md:h-64 rounded-2xl overflow-hidden cursor-pointer"
-              >
-                <img
-                  src={cat.image}
-                  alt={cat.name}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  referrerPolicy="no-referrer"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                <div className="absolute bottom-8 left-8 space-y-2">
-                  <h3 className="text-2xl font-serif font-bold text-white">{cat.name}</h3>
-                  <Link to={`/shop?category=${cat.id}`} className="text-gold-400 text-sm font-medium flex items-center space-x-1 group-hover:text-white transition-colors">
-                    <span>Explore Collection</span>
-                    <ChevronRight size={16} />
-                  </Link>
-                </div>
-              </motion.div>
-            ))
-          ) : (
-            // Placeholder categories if none in DB
-            ['Rings', 'Necklaces', 'Earrings'].map((name, i) => (
-              <div key={i} className="h-80 bg-gray-100 rounded-3xl animate-pulse" />
-            ))
-          )}
+      {/* Categories Bar */}
+      <section className="bg-white border-b border-gray-100 sticky top-20 z-20 overflow-x-auto no-scrollbar">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between py-6 min-w-max gap-8">
+            <Link
+              to="/shop"
+              className="flex items-center space-x-3 text-gray-600 hover:text-gold-600 transition-all group"
+            >
+              <div className="p-3 rounded-2xl bg-gray-50 group-hover:bg-gold-50 transition-colors">
+                <Sparkles size={24} className="text-gold-600" />
+              </div>
+              <span className="text-sm font-bold tracking-tight uppercase">All Jewellery</span>
+            </Link>
+            {categories.map((cat) => {
+              const getIcon = (name: string) => {
+                const n = name.toLowerCase();
+                if (n.includes('gold')) return <Coins size={24} className="text-gold-600" />;
+                if (n.includes('diamond')) return <Diamond size={24} className="text-gold-600" />;
+                if (n.includes('earring')) return <Flower size={24} className="text-gold-600" />;
+                if (n.includes('ring')) return <Circle size={24} className="text-gold-600" />;
+                if (n.includes('daily')) return <Watch size={24} className="text-gold-600" />;
+                if (n.includes('gemstone')) return <Hexagon size={24} className="text-gold-600" />;
+                if (n.includes('wedding')) return <Heart size={24} className="text-gold-600" />;
+                if (n.includes('gift')) return <Gift size={24} className="text-gold-600" />;
+                return <MoreHorizontal size={24} className="text-gold-600" />;
+              };
+
+              return (
+                <Link
+                  key={cat.id}
+                  to={`/shop?category=${cat.id}`}
+                  className="flex items-center space-x-3 text-gray-600 hover:text-gold-600 transition-all group"
+                >
+                  <div className="p-3 rounded-2xl bg-gray-50 group-hover:bg-gold-50 transition-colors">
+                    {getIcon(cat.name)}
+                  </div>
+                  <span className="text-sm font-bold tracking-tight uppercase">{cat.name}</span>
+                </Link>
+              );
+            })}
+          </div>
         </div>
       </section>
 
