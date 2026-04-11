@@ -359,7 +359,7 @@ const Home = () => {
   return (
     <div className="space-y-16 pb-24">
       {/* Hero Section */}
-      <section className="relative h-[90vh] flex items-center overflow-hidden">
+      <section className="relative h-[70vh] md:h-[90vh] flex items-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img
             src={settings?.hero?.image || "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&q=80&w=2000"}
@@ -518,12 +518,12 @@ const Home = () => {
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            className="relative h-[600px] rounded-[3rem] overflow-hidden"
+            className="relative h-[350px] sm:h-[450px] md:h-[600px] rounded-[2rem] md:rounded-[3rem] overflow-hidden"
           >
             <img
               src={settings?.about?.image || "https://images.unsplash.com/photo-1573408302185-06ff321cf6e6?auto=format&fit=crop&q=80&w=1000"}
               alt="Our Story"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover md:object-cover"
               referrerPolicy="no-referrer"
             />
             <div className="absolute inset-0 bg-gold-900/10" />
