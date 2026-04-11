@@ -17,6 +17,14 @@ import { CartProvider, WishlistProvider, SettingsProvider, useCart, useWishlist,
 
 // --- Components ---
 
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+};
+
 const uploadToImgBB = async (file: File) => {
   const apiKey = (import.meta as any).env.VITE_IMGBB_API_KEY || '1ee43179b21bce887d7a14af6e26f788';
   const formData = new FormData();
@@ -349,7 +357,7 @@ const Home = () => {
   }, []);
 
   return (
-    <div className="space-y-24 pb-24">
+    <div className="space-y-16 pb-24">
       {/* Hero Section */}
       <section className="relative h-[90vh] flex items-center overflow-hidden">
         <div className="absolute inset-0 z-0">
@@ -859,40 +867,49 @@ const ProductDetail = () => {
             </div>
           )}
 
-          <div className="space-y-6 pt-6 border-t border-gray-100">
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-              <div className="flex items-center bg-gray-50 rounded-2xl border border-gray-100 overflow-hidden h-16">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                {product.stock > 0 ? (
+                  <>
+                    <div className="flex items-center bg-gray-50 rounded-2xl border border-gray-100 overflow-hidden h-16">
+                      <button 
+                        onClick={() => setDetailQuantity(prev => Math.max(1, prev - 1))}
+                        className="px-6 h-full hover:bg-gray-100 transition-colors"
+                      >
+                        <Minus size={20} />
+                      </button>
+                      <span className="w-12 text-center font-bold text-xl">{detailQuantity}</span>
+                      <button 
+                        onClick={() => setDetailQuantity(prev => Math.min(product.stock, prev + 1))}
+                        className="px-6 h-full hover:bg-gray-100 transition-colors"
+                      >
+                        <Plus size={20} />
+                      </button>
+                    </div>
+                    <button
+                      onClick={() => {
+                        addToCart(product, detailQuantity);
+                      }}
+                      className="flex-grow bg-gray-900 text-white h-16 rounded-2xl font-bold hover:bg-gold-600 transition-all shadow-xl"
+                    >
+                      Add to Shopping Bag
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    disabled
+                    className="flex-grow bg-gray-200 text-gray-500 h-16 rounded-2xl font-bold cursor-not-allowed flex items-center justify-center space-x-2"
+                  >
+                    <AlertTriangle size={20} />
+                    <span>Out of Stock</span>
+                  </button>
+                )}
                 <button 
-                  onClick={() => setDetailQuantity(prev => Math.max(1, prev - 1))}
-                  className="px-6 h-full hover:bg-gray-100 transition-colors"
+                  onClick={() => toggleWishlist(product.id)}
+                  className={`h-16 px-6 border rounded-2xl transition-all flex items-center justify-center ${isInWishlist(product.id) ? 'border-red-100 text-red-500 bg-red-50' : 'border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-100'}`}
                 >
-                  <Minus size={20} />
-                </button>
-                <span className="w-12 text-center font-bold text-xl">{detailQuantity}</span>
-                <button 
-                  onClick={() => setDetailQuantity(prev => Math.min(product.stock, prev + 1))}
-                  className="px-6 h-full hover:bg-gray-100 transition-colors"
-                >
-                  <Plus size={20} />
+                  <Heart size={24} fill={isInWishlist(product.id) ? "currentColor" : "none"} />
                 </button>
               </div>
-              <button
-                onClick={() => {
-                  addToCart(product, detailQuantity);
-                }}
-                disabled={product.stock === 0}
-                className="flex-grow bg-gray-900 text-white h-16 rounded-2xl font-bold hover:bg-gold-600 transition-all shadow-xl disabled:bg-gray-300 disabled:cursor-not-allowed"
-              >
-                {product.stock > 0 ? 'Add to Shopping Bag' : 'Out of Stock'}
-              </button>
-              <button 
-                onClick={() => toggleWishlist(product.id)}
-                className={`h-16 px-6 border rounded-2xl transition-all flex items-center justify-center ${isInWishlist(product.id) ? 'border-red-100 text-red-500 bg-red-50' : 'border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-100'}`}
-              >
-                <Heart size={24} fill={isInWishlist(product.id) ? "currentColor" : "none"} />
-              </button>
-            </div>
-          </div>
 
           <div className="grid grid-cols-2 gap-4">
               <div className="p-4 bg-gray-50 rounded-2xl flex items-center space-x-3">
@@ -1088,9 +1105,21 @@ const Checkout = () => {
     name: '',
     email: '',
     phone: '',
-    address: '',
+    addressLine1: '',
+    addressLine2: '',
+    city: '',
+    state: '',
+    pincode: '',
   });
   const [paymentMethod, setPaymentMethod] = useState<'whatsapp' | 'card' | 'upi'>('whatsapp');
+  const [paymentScreenshot, setPaymentScreenshot] = useState<string>('');
+  const [isUploading, setIsUploading] = useState(false);
+
+  const shippingFee = (total >= (settings.shipping?.freeThreshold || 2000)) 
+    ? 0 
+    : (settings.shipping?.pincodeRates?.[formData.pincode] || settings.shipping?.flatRate || 100);
+  
+  const grandTotal = total + shippingFee;
 
   useEffect(() => {
     if (settings.paymentModes) {
@@ -1105,31 +1134,58 @@ const Checkout = () => {
   }, [settings]);
   const [loading, setLoading] = useState(false);
 
+  const handleScreenshotUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploading(true);
+    try {
+      const url = await uploadToImgBB(file);
+      setPaymentScreenshot(url);
+      toast.success("Screenshot uploaded!");
+    } catch (error) {
+      toast.error("Upload failed");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (paymentMethod === 'upi' && !paymentScreenshot) {
+      toast.error("Please upload payment screenshot for verification");
+      return;
+    }
     setLoading(true);
     try {
       const orderData = {
         customerName: formData.name,
         customerEmail: formData.email,
         customerPhone: formData.phone,
-        address: formData.address,
+        shippingAddress: {
+          addressLine1: formData.addressLine1,
+          addressLine2: formData.addressLine2,
+          city: formData.city,
+          state: formData.state,
+          pincode: formData.pincode,
+        },
         items: cart,
-        total: total,
+        subtotal: total,
+        shippingFee: shippingFee,
+        total: grandTotal,
         status: 'pending',
         paymentMethod: paymentMethod,
+        paymentScreenshot: paymentScreenshot,
         createdAt: serverTimestamp(),
       };
       const docRef = await addDoc(collection(db, 'orders'), orderData);
       
       if (paymentMethod === 'whatsapp') {
-        const message = `Hello Prahvi Jewelry! I've just placed an order (ID: ${docRef.id}).\n\nItems:\n${cart.map(item => `- ${item.name} (x${item.quantity})`).join('\n')}\n\nTotal: ₹${total.toLocaleString()}\n\nPlease confirm my order.`;
+        const message = `Hello Prahvi Jewelry! I've just placed an order (ID: ${docRef.id}).\n\nItems:\n${cart.map(item => `- ${item.name} (x${item.quantity})`).join('\n')}\n\nTotal: ₹${grandTotal.toLocaleString()}\n\nPlease confirm my order.`;
         const whatsappUrl = `https://wa.me/${(settings?.whatsapp || '').replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
         window.open(whatsappUrl, '_blank');
       } else if (paymentMethod === 'upi') {
-        toast.success("Order placed! Please complete the UPI payment.");
+        toast.success("Order placed! We will verify your payment screenshot.");
       } else {
-        // Simulate Stripe Checkout
         toast.info("Redirecting to secure payment gateway...");
         await new Promise(resolve => setTimeout(resolve, 1500));
         toast.success("Payment successful! (Demo Mode)");
@@ -1189,14 +1245,24 @@ const Checkout = () => {
               />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-medium text-gray-700">Shipping Address</label>
-              <textarea
-                required
-                rows={3}
-                value={formData.address}
-                onChange={e => setFormData({ ...formData, address: e.target.value })}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-gold-500 outline-none transition-all"
-              />
+              <label className="text-sm font-medium text-gray-700">Address Line 1</label>
+              <input required type="text" value={formData.addressLine1} onChange={e => setFormData({ ...formData, addressLine1: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-gold-500 outline-none transition-all" />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <label className="text-sm font-medium text-gray-700">Address Line 2 (Optional)</label>
+              <input type="text" value={formData.addressLine2} onChange={e => setFormData({ ...formData, addressLine2: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-gold-500 outline-none transition-all" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">City</label>
+              <input required type="text" value={formData.city} onChange={e => setFormData({ ...formData, city: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-gold-500 outline-none transition-all" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">State</label>
+              <input required type="text" value={formData.state} onChange={e => setFormData({ ...formData, state: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-gold-500 outline-none transition-all" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Pincode</label>
+              <input required type="text" value={formData.pincode} onChange={e => setFormData({ ...formData, pincode: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-gold-500 outline-none transition-all" />
             </div>
           </div>
 
@@ -1260,39 +1326,79 @@ const Checkout = () => {
           </div>
 
           {paymentMethod === 'upi' && (
-            <div className="p-6 bg-gray-50 rounded-2xl border border-gray-200 space-y-4 text-center">
-              <p className="text-sm font-medium text-gray-700">Scan QR Code to Pay</p>
-              {settings.upiQrCode ? (
-                <img src={settings.upiQrCode} alt="UPI QR Code" className="w-48 h-48 mx-auto rounded-xl border-4 border-white shadow-sm" />
-              ) : (
-                <div className="w-48 h-48 mx-auto bg-gray-200 rounded-xl flex items-center justify-center text-gray-400">
-                  <LucideIcons.QrCode size={48} />
+            <div className="p-6 bg-gray-50 rounded-2xl border border-gray-200 space-y-6 text-center">
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-700">Scan QR Code to Pay</p>
+                {settings.upiQrCode ? (
+                  <img src={settings.upiQrCode} alt="UPI QR Code" className="w-48 h-48 mx-auto rounded-xl border-4 border-white shadow-sm" />
+                ) : (
+                  <div className="w-48 h-48 mx-auto bg-gray-200 rounded-xl flex items-center justify-center text-gray-400">
+                    <LucideIcons.QrCode size={48} />
+                  </div>
+                )}
+                {settings.upiId && (
+                  <div className="space-y-1">
+                    <p className="text-xs text-gray-500 uppercase tracking-widest">UPI ID</p>
+                    <p className="text-lg font-mono font-bold text-gray-900">{settings.upiId}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-4 border-t border-gray-200 space-y-4">
+                <p className="text-sm font-medium text-gray-700">Upload Payment Screenshot</p>
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleScreenshotUpload}
+                    disabled={isUploading}
+                    className="hidden"
+                    id="screenshot-upload"
+                  />
+                  <label
+                    htmlFor="screenshot-upload"
+                    className={`flex items-center justify-center space-x-2 w-full px-4 py-3 rounded-xl border-2 border-dashed border-gray-200 cursor-pointer hover:border-gold-400 transition-all ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    {paymentScreenshot ? (
+                      <div className="flex items-center space-x-2 text-green-600">
+                        <LucideIcons.CheckCircle size={20} />
+                        <span className="text-sm font-medium">Screenshot Uploaded</span>
+                      </div>
+                    ) : (
+                      <>
+                        <Upload size={20} className={isUploading ? 'animate-bounce' : ''} />
+                        <span className="text-sm font-medium">{isUploading ? 'Uploading...' : 'Choose File'}</span>
+                      </>
+                    )}
+                  </label>
                 </div>
-              )}
-              {settings.upiId && (
-                <div className="space-y-1">
-                  <p className="text-xs text-gray-500 uppercase tracking-widest">UPI ID</p>
-                  <p className="text-lg font-mono font-bold text-gray-900">{settings.upiId}</p>
-                </div>
-              )}
-              <p className="text-xs text-gray-500">After payment, click "Place Order" below. We will verify and confirm your order.</p>
+                {paymentScreenshot && (
+                  <img src={paymentScreenshot} alt="Payment Screenshot" className="w-32 h-32 mx-auto object-cover rounded-lg border border-gray-200" />
+                )}
+              </div>
+              <p className="text-xs text-gray-500">We will verify the screenshot and confirm your order.</p>
             </div>
           )}
 
-          <div className="pt-6 border-t border-gray-100">
-            <div className="flex justify-between items-center mb-8">
-              <span className="text-gray-600">Total Amount</span>
-              <span className="text-2xl font-bold text-gray-900">₹{total.toLocaleString()}</span>
+          <div className="pt-6 border-t border-gray-100 space-y-2">
+            <div className="flex justify-between items-center text-gray-600">
+              <span>Subtotal</span>
+              <span>₹{total.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between items-center text-gray-600">
+              <span>Shipping Fee</span>
+              <span>{shippingFee === 0 ? 'FREE' : `₹${shippingFee.toLocaleString()}`}</span>
+            </div>
+            <div className="flex justify-between items-center pt-4 border-t border-gray-100">
+              <span className="text-lg font-bold">Total Amount</span>
+              <span className="text-2xl font-bold text-gray-900">₹{grandTotal.toLocaleString()}</span>
             </div>
             <button
               type="submit"
-              disabled={loading}
-              className="w-full bg-gold-600 text-white py-5 rounded-2xl font-bold hover:bg-gold-500 transition-all shadow-xl shadow-gold-600/20 disabled:bg-gray-300"
+              disabled={loading || isUploading}
+              className="w-full mt-6 bg-gold-600 text-white py-5 rounded-2xl font-bold hover:bg-gold-500 transition-all shadow-xl shadow-gold-600/20 disabled:bg-gray-300"
             >
-              {loading ? 'Processing...' : 
-               paymentMethod === 'whatsapp' ? 'Place Order & Confirm on WhatsApp' : 
-               paymentMethod === 'upi' ? 'Place Order & Notify Admin' :
-               'Pay Now & Place Order'}
+              {loading ? 'Processing...' : (paymentMethod === 'upi' ? 'Confirm & Place Order' : 'Place Order')}
             </button>
           </div>
         </form>
@@ -1660,6 +1766,35 @@ const AdminSettings = () => {
             </div>
 
             <div className="pt-6 border-t border-gray-100 space-y-4">
+              <h4 className="font-bold">Shipping Configuration</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Free Shipping Threshold (₹)</label>
+                  <input type="number" value={formData.shipping?.freeThreshold || 0} onChange={e => setFormData({ ...formData, shipping: { ...formData.shipping, freeThreshold: Number(e.target.value) } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Flat Shipping Rate (₹)</label>
+                  <input type="number" value={formData.shipping?.flatRate || 0} onChange={e => setFormData({ ...formData, shipping: { ...formData.shipping, flatRate: Number(e.target.value) } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Pincode Specific Rates (JSON format)</label>
+                <textarea
+                  rows={3}
+                  value={JSON.stringify(formData.shipping?.pincodeRates || {}, null, 2)}
+                  onChange={e => {
+                    try {
+                      const rates = JSON.parse(e.target.value);
+                      setFormData({ ...formData, shipping: { ...formData.shipping, pincodeRates: rates } });
+                    } catch (err) {}
+                  }}
+                  className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none font-mono text-xs"
+                  placeholder='{ "110001": 50, "400001": 80 }'
+                />
+              </div>
+            </div>
+
+            <div className="pt-6 border-t border-gray-100 space-y-4">
               <h4 className="font-bold">Payment Modes</h4>
               <div className="flex space-x-6">
                 <label className="flex items-center space-x-2 cursor-pointer">
@@ -1981,6 +2116,16 @@ const AdminDashboard = () => {
   const { user, isAdmin, loading } = useAuth();
   const navigate = useNavigate();
 
+  const [messageCount, setMessageCount] = useState(0);
+
+  useEffect(() => {
+    const fetchCounts = async () => {
+      const mSnap = await getDocs(collection(db, 'contact_messages'));
+      setMessageCount(mSnap.size);
+    };
+    fetchCounts();
+  }, []);
+
   if (loading) return <div className="pt-40 text-center font-serif text-2xl">Verifying credentials...</div>;
   if (!isAdmin) {
     return (
@@ -1999,7 +2144,7 @@ const AdminDashboard = () => {
     { name: 'Orders', path: '/admin/orders', icon: ShoppingBag },
     { name: 'Reviews', path: '/admin/reviews', icon: MessageSquare },
     { name: 'Policies', path: '/admin/policies', icon: Shield },
-    { name: 'Messages', path: '/admin/messages', icon: Mail },
+    { name: 'Messages', path: '/admin/messages', icon: Mail, badge: messageCount > 0 ? messageCount : null },
     { name: 'Settings', path: '/admin/settings', icon: Settings },
   ];
 
@@ -2016,10 +2161,17 @@ const AdminDashboard = () => {
             <Link
               key={link.path}
               to={link.path}
-              className={`flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${location.pathname === link.path ? 'bg-gold-50 text-gold-600' : 'text-gray-600 hover:bg-gray-50'}`}
+              className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all ${location.pathname === link.path ? 'bg-gold-50 text-gold-600' : 'text-gray-600 hover:bg-gray-50'}`}
             >
-              <link.icon size={18} />
-              <span>{link.name}</span>
+              <div className="flex items-center space-x-3">
+                <link.icon size={18} />
+                <span>{link.name}</span>
+              </div>
+              {link.badge && (
+                <span className="bg-gold-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                  {link.badge}
+                </span>
+              )}
             </Link>
           ))}
         </nav>
@@ -2049,25 +2201,31 @@ const AdminDashboard = () => {
 };
 
 const AdminHome = () => {
-  const [stats, setStats] = useState({ products: 0, orders: 0, totalRevenue: 0, pendingOrders: 0 });
+  const [stats, setStats] = useState({ products: 0, orders: 0, totalRevenue: 0, pendingOrders: 0, messages: 0 });
   const [lowStockProducts, setLowStockProducts] = useState<Product[]>([]);
+  const [recentMessages, setRecentMessages] = useState<ContactMessage[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchStats = async () => {
       const pSnap = await getDocs(collection(db, 'products'));
       const oSnap = await getDocs(collection(db, 'orders'));
+      const mSnap = await getDocs(query(collection(db, 'contact_messages'), orderBy('createdAt', 'desc'), limit(5)));
+      
       const products = pSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
       const orders = oSnap.docs.map(doc => doc.data() as Order);
+      const messages = mSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as ContactMessage));
       
       setStats({
         products: pSnap.size,
         orders: oSnap.size,
         totalRevenue: orders.reduce((sum, o) => sum + o.total, 0),
-        pendingOrders: orders.filter(o => o.status === 'pending').length
+        pendingOrders: orders.filter(o => o.status === 'pending').length,
+        messages: mSnap.size
       });
 
       setLowStockProducts(products.filter(p => p.stock < 5));
+      setRecentMessages(messages);
 
       // Simple chart data generation (last 7 days)
       const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -2145,36 +2303,62 @@ const AdminHome = () => {
           </div>
         </div>
 
-        {/* Inventory Alerts */}
-        <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-6">
-          <div className="flex items-center space-x-2 text-orange-600">
-            <AlertTriangle size={20} />
-            <h3 className="text-xl font-serif font-bold">Inventory Alerts</h3>
-          </div>
-          <div className="space-y-4">
-            {lowStockProducts.length > 0 ? (
-              lowStockProducts.map(product => (
-                <div key={product.id} className="flex items-center justify-between p-4 bg-orange-50 rounded-2xl border border-orange-100">
-                  <div className="flex items-center space-x-3">
-                    <img src={product.images[0]} className="w-10 h-10 rounded-lg object-cover" alt="" />
-                    <div>
-                      <p className="text-sm font-bold text-gray-900">{product.name}</p>
-                      <p className="text-xs text-orange-600 font-medium">{product.stock} units left</p>
+        {/* Inventory & Messages */}
+        <div className="space-y-8">
+          <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-6">
+            <div className="flex items-center space-x-2 text-orange-600">
+              <AlertTriangle size={20} />
+              <h3 className="text-xl font-serif font-bold">Inventory Alerts</h3>
+            </div>
+            <div className="space-y-4">
+              {lowStockProducts.length > 0 ? (
+                lowStockProducts.map(product => (
+                  <div key={product.id} className="flex items-center justify-between p-4 bg-orange-50 rounded-2xl border border-orange-100">
+                    <div className="flex items-center space-x-3">
+                      <img src={product.images[0]} className="w-10 h-10 rounded-lg object-cover" alt="" />
+                      <div>
+                        <p className="text-sm font-bold text-gray-900">{product.name}</p>
+                        <p className="text-xs text-orange-600 font-medium">{product.stock === 0 ? 'OUT OF STOCK' : `${product.stock} units left`}</p>
+                      </div>
                     </div>
+                    <Link to="/admin/products" className="p-2 bg-white rounded-lg text-orange-600 hover:bg-orange-100 transition-colors">
+                      <Plus size={16} />
+                    </Link>
                   </div>
-                  <Link to="/admin/products" className="p-2 bg-white rounded-lg text-orange-600 hover:bg-orange-100 transition-colors">
-                    <Plus size={16} />
-                  </Link>
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <div className="inline-flex p-4 bg-green-50 text-green-600 rounded-full mb-4">
+                    <Shield size={32} />
+                  </div>
+                  <p className="text-gray-500 text-sm">All inventory levels are healthy.</p>
                 </div>
-              ))
-            ) : (
-              <div className="text-center py-8">
-                <div className="inline-flex p-4 bg-green-50 text-green-600 rounded-full mb-4">
-                  <Shield size={32} />
-                </div>
-                <p className="text-gray-500 text-sm">All inventory levels are healthy.</p>
+              )}
+            </div>
+          </div>
+
+          <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2 text-gold-600">
+                <Mail size={20} />
+                <h3 className="text-xl font-serif font-bold">Recent Messages</h3>
               </div>
-            )}
+              <Link to="/admin/messages" className="text-xs font-bold text-gold-600 hover:underline">View All</Link>
+            </div>
+            <div className="space-y-4">
+              {recentMessages.map(msg => (
+                <div key={msg.id} className="p-4 bg-gray-50 rounded-2xl border border-gray-100 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <p className="text-sm font-bold text-gray-900">{msg.name}</p>
+                    <p className="text-[10px] text-gray-400 font-mono">{msg.createdAt ? new Date(msg.createdAt.seconds * 1000).toLocaleDateString() : 'Just now'}</p>
+                  </div>
+                  <p className="text-xs text-gray-600 line-clamp-2">{msg.message}</p>
+                </div>
+              ))}
+              {recentMessages.length === 0 && (
+                <p className="text-center text-gray-400 text-sm py-8">No new messages.</p>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -3015,6 +3199,7 @@ export default function App() {
       <WishlistProvider>
         <CartProvider>
           <Router>
+            <ScrollToTop />
             <div className="min-h-screen bg-white flex flex-col">
               <Navbar />
               <main className="flex-grow">
