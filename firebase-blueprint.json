@@ -8,6 +8,7 @@
         "name": { "type": "string", "description": "Product name" },
         "description": { "type": "string", "description": "Product description" },
         "price": { "type": "number", "description": "Product price" },
+        "originalPrice": { "type": "number", "description": "Original price before discount" },
         "category": { "type": "string", "description": "Category ID" },
         "images": { "type": "array", "description": "Array of image URLs" },
         "stock": { "type": "number", "description": "Available stock" },
@@ -39,6 +40,8 @@
         "items": { "type": "array" },
         "total": { "type": "number" },
         "status": { "type": "string", "enum": ["pending", "confirmed", "shipped", "delivered", "cancelled"] },
+        "trackingNumber": { "type": "string" },
+        "trackingLink": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["customerName", "customerPhone", "items", "total", "status"]
@@ -157,13 +160,26 @@
             }
           }
         },
+        "quickLinks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "path": { "type": "string" }
+            }
+          }
+        },
         "paymentModes": {
           "type": "object",
           "properties": {
             "whatsapp": { "type": "boolean" },
-            "card": { "type": "boolean" }
+            "card": { "type": "boolean" },
+            "upi": { "type": "boolean" }
           }
-        }
+        },
+        "upiId": { "type": "string" },
+        "upiQrCode": { "type": "string" }
       }
     }
   },

@@ -3,7 +3,7 @@
 // ===============================================================
 //
 // Collection: products
-// Fields: name (string), description (string), price (number), category (string), images (list), stock (number), featured (bool), createdAt (timestamp)
+// Fields: name (string), description (string), price (number), originalPrice (number), category (string), images (list), stock (number), featured (bool), createdAt (timestamp)
 //
 // Collection: categories
 // Fields: name (string), description (string), image (string)
