@@ -170,7 +170,7 @@ const defaultSettings: StoreSettings = {
   facebook: '#',
   whatsapp: '+15551234567',
   announcementBar: {
-    text: '✨ Free Shipping on all orders above ₹2000! ✨',
+    text: '✨ Free Shipping on all orders above ₹5000! ✨',
     enabled: true
   },
   hero: {
@@ -198,9 +198,9 @@ const defaultSettings: StoreSettings = {
   },
   features: [
     { icon: 'Star', title: "Premium Quality", desc: "Certified diamonds & 18k gold" },
-    { icon: 'Truck', title: "Free Shipping", desc: "On all orders over $500" },
+    { icon: 'Truck', title: "Free Shipping", desc: "On all orders over ₹5000" },
     { icon: 'Shield', title: "Secure Payment", desc: "100% encrypted transactions" },
-    { icon: 'RefreshCcw', title: "Easy Returns", desc: "30-day money back guarantee" },
+    { icon: 'RefreshCcw', title: "Easy Returns", desc: "7-day exchange policy" },
   ],
   testimonials: [
     { name: "Ananya Sharma", content: "The quality of the jewelry is exceptional. I bought a necklace for my sister and she absolutely loved it!", rating: 5 },
@@ -215,7 +215,7 @@ const defaultSettings: StoreSettings = {
   upiId: '',
   upiQrCode: '',
   shipping: {
-    freeThreshold: 2000,
+    freeThreshold: 5000,
     flatRate: 100,
     pincodeRates: {}
   }
