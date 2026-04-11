@@ -1,23 +1,10 @@
-import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
-import firebaseConfig from '../firebase-applet-config.json';
-
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
-export const storage = getStorage(app);
-export const googleProvider = new GoogleAuthProvider();
-
-export const loginWithGoogle = async () => {
-  try {
-    const result = await signInWithPopup(auth, googleProvider);
-    return result.user;
-  } catch (error) {
-    console.error("Login Error:", error);
-    throw error;
-  }
-};
-
-export const logout = () => signOut(auth);
+{
+  "projectId": "ai-studio-applet-webapp-2ee84",
+  "appId": "1:419832011080:web:0db77bc91377f5dcd3fb7d",
+  "apiKey": "AIzaSyBNN6ZMlD4ybOa8prY8BVtIM-Z-P1MtMCA",
+  "authDomain": "ai-studio-applet-webapp-2ee84.firebaseapp.com",
+  "firestoreDatabaseId": "ai-studio-237725a5-9432-45f4-88f8-e969a4b3c7a9",
+  "storageBucket": "ai-studio-applet-webapp-2ee84.firebasestorage.app",
+  "messagingSenderId": "419832011080",
+  "measurementId": ""
+}

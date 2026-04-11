@@ -45,7 +45,7 @@ export const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
       <Link to={`/product/${product.id}`} className="block">
         <div className="relative aspect-[4/5] overflow-hidden bg-gray-50">
           <img
-            src={product.images[0]}
+            src={product.images?.[0] || 'https://picsum.photos/seed/jewelry/800/1000'}
             alt={product.name}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
             referrerPolicy="no-referrer"

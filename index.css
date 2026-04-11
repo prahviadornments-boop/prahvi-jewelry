@@ -371,7 +371,7 @@ const Home = () => {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
             {featuredProducts.length > 0 ? (
               featuredProducts.map(product => (
                 <ProductCard key={product.id} product={product} />
@@ -500,7 +500,7 @@ const Shop = () => {
             <button
               key={cat.id}
               onClick={() => setSearchParams({ category: cat.id })}
-              className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${selectedCategory === cat.id ? 'bg-gold-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+              className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${selectedCategory === cat.id ? 'bg-gold-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
             >
               {cat.name}
             </button>
@@ -508,7 +508,7 @@ const Shop = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
         {loading ? (
           [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => (
             <div key={i} className="aspect-[4/5] bg-gray-100 rounded-2xl animate-pulse" />
@@ -1926,7 +1926,7 @@ const AdminProducts = () => {
         <button
           onClick={() => {
             setEditingProduct(null);
-            setFormData({ name: '', description: '', price: 0, category: '', images: '', stock: 0, featured: false });
+            setFormData({ name: '', description: '', price: 0, originalPrice: 0, category: '', images: '', stock: 0, featured: false });
             setIsModalOpen(true);
           }}
           className="bg-gray-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-gold-600 transition-all flex items-center space-x-2"
@@ -1943,6 +1943,7 @@ const AdminProducts = () => {
               <th className="px-6 py-4 text-xs uppercase tracking-widest font-bold text-gray-500">Product</th>
               <th className="px-6 py-4 text-xs uppercase tracking-widest font-bold text-gray-500">Category</th>
               <th className="px-6 py-4 text-xs uppercase tracking-widest font-bold text-gray-500">Price</th>
+              <th className="px-6 py-4 text-xs uppercase tracking-widest font-bold text-gray-500">Discount</th>
               <th className="px-6 py-4 text-xs uppercase tracking-widest font-bold text-gray-500">Stock</th>
               <th className="px-6 py-4 text-xs uppercase tracking-widest font-bold text-gray-500">Actions</th>
             </tr>
@@ -1964,6 +1965,15 @@ const AdminProducts = () => {
                       <p className="text-xs text-gray-400 line-through">₹{product.originalPrice.toLocaleString()}</p>
                     )}
                   </div>
+                </td>
+                <td className="px-6 py-4">
+                  {product.originalPrice && product.originalPrice > product.price ? (
+                    <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                      {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
+                    </span>
+                  ) : (
+                    <span className="text-xs text-gray-400">-</span>
+                  )}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-600">{product.stock}</td>
                 <td className="px-6 py-4">
@@ -2161,14 +2171,14 @@ const AdminCategories = () => {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
         {categories.map(cat => (
-          <div key={cat.id} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
-            <img src={cat.image} className="w-full h-40 object-cover rounded-xl" alt="" />
+          <div key={cat.id} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm space-y-3">
+            <img src={cat.image || 'https://picsum.photos/seed/jewelry/400/300'} className="w-full h-32 object-cover rounded-xl" alt="" />
             <div className="flex justify-between items-start">
-              <div>
-                <h3 className="text-lg font-bold">{cat.name}</h3>
-                <p className="text-sm text-gray-500 line-clamp-2">{cat.description}</p>
+              <div className="min-w-0">
+                <h3 className="text-sm font-bold truncate">{cat.name}</h3>
+                <p className="text-[10px] text-gray-500 line-clamp-1">{cat.description}</p>
               </div>
               <button
                 onClick={async () => {
@@ -2641,6 +2651,7 @@ export default function App() {
                   <Route path="/policies/:type" element={<Policies />} />
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/admin/*" element={<AdminDashboard />} />
+                  <Route path="*" element={<Home />} />
                 </Routes>
               </main>
               <Footer />
