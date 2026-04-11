@@ -64,11 +64,18 @@ export const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
             </button>
           </div>
           
-          {product.stock <= 5 && product.stock > 0 && (
-            <div className="absolute top-4 left-4 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
-              Only {product.stock} Left
-            </div>
-          )}
+          <div className="absolute top-4 left-4 flex flex-col gap-2">
+            {product.labels?.map((label, i) => (
+              <span key={i} className="bg-gold-600 text-white text-[9px] font-bold px-2 py-1 rounded-full uppercase tracking-widest shadow-lg">
+                {label}
+              </span>
+            ))}
+            {product.stock <= 5 && product.stock > 0 && (
+              <div className="bg-red-500 text-white text-[9px] font-bold px-2 py-1 rounded-full uppercase tracking-widest shadow-lg">
+                Only {product.stock} Left
+              </div>
+            )}
+          </div>
           {product.stock === 0 && (
             <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
               <span className="bg-gray-900 text-white text-xs font-bold px-4 py-2 rounded-full uppercase tracking-widest">Out of Stock</span>
