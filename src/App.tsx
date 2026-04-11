@@ -35,13 +35,55 @@ const uploadToImgBB = async (file: File) => {
   }
 };
 
+const AnnouncementBar = () => {
+  const { settings } = useSettings();
+  if (!settings?.announcementBar?.enabled) return null;
+
+  return (
+    <div className="bg-gray-900 text-white py-2 px-4 text-center text-xs font-medium tracking-wider uppercase">
+      {settings.announcementBar.link ? (
+        <Link to={settings.announcementBar.link} className="hover:underline">
+          {settings.announcementBar.text}
+        </Link>
+      ) : (
+        <span>{settings.announcementBar.text}</span>
+      )}
+    </div>
+  );
+};
+
+const WhatsAppButton = () => {
+  const { settings } = useSettings();
+  if (!settings?.whatsapp) return null;
+
+  const whatsappUrl = `https://wa.me/${settings.whatsapp.replace(/\D/g, '')}`;
+
+  return (
+    <a
+      href={whatsappUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="fixed bottom-8 right-8 z-[100] bg-green-500 text-white p-4 rounded-full shadow-2xl hover:bg-green-600 transition-all hover:scale-110 group"
+      aria-label="Chat on WhatsApp"
+    >
+      <LucideIcons.MessageCircle size={28} />
+      <span className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-white text-gray-900 px-4 py-2 rounded-xl text-sm font-bold shadow-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-gray-100">
+        Chat with us!
+      </span>
+    </a>
+  );
+};
+
 const Navbar = () => {
   const { cart } = useCart();
   const { wishlist } = useWishlist();
   const { user, isAdmin } = useAuth();
   const { settings } = useSettings();
   const [isOpen, setIsOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const location = useLocation();
+  const navigate = useNavigate();
 
   const navLinks = [
     { name: 'Home', path: '/' },
@@ -49,8 +91,18 @@ const Navbar = () => {
     { name: 'Contact', path: '/contact' },
   ];
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
+      setIsSearchOpen(false);
+      setSearchQuery('');
+    }
+  };
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
+      <AnnouncementBar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-20 items-center">
           <Link to="/" className="flex items-center space-x-2">
@@ -80,6 +132,12 @@ const Navbar = () => {
           </div>
 
           <div className="flex items-center space-x-5">
+            <button 
+              onClick={() => setIsSearchOpen(true)}
+              className="p-2 text-gray-600 hover:text-gold-600 transition-colors"
+            >
+              <LucideIcons.Search size={22} />
+            </button>
             <Link to="/wishlist" className="relative p-2 text-gray-600 hover:text-gold-600 transition-colors">
               <Heart size={22} />
               {wishlist.length > 0 && (
@@ -105,6 +163,53 @@ const Navbar = () => {
           </div>
         </div>
       </div>
+
+      {/* Search Overlay */}
+      <AnimatePresence>
+        {isSearchOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] bg-white flex flex-col"
+          >
+            <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between border-b border-gray-100">
+              <form onSubmit={handleSearch} className="flex-grow flex items-center">
+                <LucideIcons.Search size={24} className="text-gray-400 mr-4" />
+                <input
+                  autoFocus
+                  type="text"
+                  placeholder="Search for jewelry, collections..."
+                  className="w-full text-xl font-serif outline-none placeholder:text-gray-300"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                />
+              </form>
+              <button onClick={() => setIsSearchOpen(false)} className="p-2 text-gray-400 hover:text-gray-900">
+                <X size={28} />
+              </button>
+            </div>
+            <div className="flex-grow p-8 max-w-7xl mx-auto w-full">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-6">Popular Searches</h4>
+              <div className="flex flex-wrap gap-3">
+                {['Necklaces', 'Diamond Rings', 'Gold Bangles', 'Earrings', 'Bridal Sets'].map(term => (
+                  <button
+                    key={term}
+                    onClick={() => {
+                      setSearchQuery(term);
+                      navigate(`/shop?search=${encodeURIComponent(term)}`);
+                      setIsSearchOpen(false);
+                    }}
+                    className="px-6 py-2 rounded-full border border-gray-100 text-sm hover:bg-gray-50 transition-colors"
+                  >
+                    {term}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Mobile Menu */}
       <AnimatePresence>
@@ -438,6 +543,43 @@ const Home = () => {
 
       {/* Newsletter */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center space-y-4 mb-16">
+          <h2 className="text-3xl md:text-4xl font-serif font-bold text-gray-900">Customer Stories</h2>
+          <p className="text-gray-500 max-w-2xl mx-auto">Hear from our community of jewelry lovers.</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {(settings?.testimonials || []).map((t, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1 }}
+              className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm space-y-6 relative"
+            >
+              <div className="flex text-gold-500">
+                {[...Array(5)].map((_, starI) => (
+                  <Star key={starI} size={16} fill={starI < t.rating ? 'currentColor' : 'none'} />
+                ))}
+              </div>
+              <p className="text-gray-600 italic leading-relaxed">"{t.content}"</p>
+              <div className="flex items-center space-x-4 pt-4 border-t border-gray-50">
+                {t.image ? (
+                  <img src={t.image} alt={t.name} className="w-12 h-12 rounded-full object-cover" />
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-gold-50 flex items-center justify-center text-gold-600 font-bold">
+                    {t.name.charAt(0)}
+                  </div>
+                )}
+                <h4 className="font-bold text-gray-900">{t.name}</h4>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* Newsletter */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="relative rounded-[3rem] overflow-hidden bg-gray-900 py-20 px-8 md:px-20 text-center space-y-8">
           <div className="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none">
             <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-gold-600 blur-[120px] rounded-full" />
@@ -472,6 +614,8 @@ const Shop = () => {
   const [loading, setLoading] = useState(true);
   
   const selectedCategory = searchParams.get('category') || 'all';
+  const searchQuery = searchParams.get('search') || '';
+  const sortBy = searchParams.get('sort') || 'newest';
 
   useEffect(() => {
     const fetchData = async () => {
@@ -484,7 +628,27 @@ const Shop = () => {
           pQuery = query(collection(db, 'products'), where('category', '==', selectedCategory));
         }
         const pSnapshot = await getDocs(pQuery);
-        setProducts(pSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product)));
+        let pData = pSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+
+        // Client-side search
+        if (searchQuery) {
+          const q = searchQuery.toLowerCase();
+          pData = pData.filter(p => 
+            p.name.toLowerCase().includes(q) || 
+            p.description.toLowerCase().includes(q) ||
+            p.category.toLowerCase().includes(q)
+          );
+        }
+
+        // Sorting
+        pData.sort((a, b) => {
+          if (sortBy === 'price-low') return a.price - b.price;
+          if (sortBy === 'price-high') return b.price - a.price;
+          if (sortBy === 'newest') return (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0);
+          return 0;
+        });
+
+        setProducts(pData);
       } catch (error) {
         console.error("Error fetching shop data:", error);
       } finally {
@@ -492,32 +656,48 @@ const Shop = () => {
       }
     };
     fetchData();
-  }, [selectedCategory]);
+  }, [selectedCategory, searchQuery, sortBy]);
 
   return (
     <div className="pt-32 pb-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
       <div className="flex flex-col md:flex-row justify-between items-center gap-8">
         <div className="space-y-2 text-center md:text-left">
-          <h1 className="text-4xl md:text-5xl font-serif font-bold text-gray-900">Our Collection</h1>
-          <p className="text-gray-500">Discover the perfect piece for every occasion.</p>
+          <h1 className="text-4xl md:text-5xl font-serif font-bold text-gray-900">
+            {searchQuery ? `Search: "${searchQuery}"` : 'Our Collection'}
+          </h1>
+          <p className="text-gray-500">
+            {products.length} {products.length === 1 ? 'piece' : 'pieces'} found
+          </p>
         </div>
         
-        <div className="flex flex-wrap justify-center gap-2">
-          <button
-            onClick={() => setSearchParams({})}
-            className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${selectedCategory === 'all' ? 'bg-gold-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-          >
-            All Pieces
-          </button>
-          {categories.map(cat => (
+        <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+          <div className="flex flex-wrap justify-center gap-2">
             <button
-              key={cat.id}
-              onClick={() => setSearchParams({ category: cat.id })}
-              className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${selectedCategory === cat.id ? 'bg-gold-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+              onClick={() => setSearchParams({})}
+              className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${selectedCategory === 'all' ? 'bg-gold-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
             >
-              {cat.name}
+              All
             </button>
-          ))}
+            {categories.map(cat => (
+              <button
+                key={cat.id}
+                onClick={() => setSearchParams({ category: cat.id, sort: sortBy, search: searchQuery })}
+                className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${selectedCategory === cat.id ? 'bg-gold-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
+
+          <select
+            value={sortBy}
+            onChange={e => setSearchParams({ category: selectedCategory, sort: e.target.value, search: searchQuery })}
+            className="bg-gray-50 border border-gray-100 rounded-full px-6 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-gold-500"
+          >
+            <option value="newest">Newest Arrivals</option>
+            <option value="price-low">Price: Low to High</option>
+            <option value="price-high">Price: High to Low</option>
+          </select>
         </div>
       </div>
 
@@ -553,6 +733,7 @@ const ProductDetail = () => {
   const [detailQuantity, setDetailQuantity] = useState(1);
 
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
   const [submittingReview, setSubmittingReview] = useState(false);
   const { user } = useAuth();
@@ -569,6 +750,18 @@ const ProductDetail = () => {
         const rQuery = query(collection(db, 'reviews'), where('productId', '==', id), where('approved', '==', true));
         const rSnap = await getDocs(rQuery);
         setReviews(rSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Review)));
+
+        // Fetch related products
+        const relQuery = query(
+          collection(db, 'products'), 
+          where('category', '==', docSnap.data().category),
+          limit(5)
+        );
+        const relSnap = await getDocs(relQuery);
+        setRelatedProducts(relSnap.docs
+          .map(doc => ({ id: doc.id, ...doc.data() } as Product))
+          .filter(p => p.id !== id)
+        );
       } catch (error) {
         console.error("Error fetching product data:", error);
       } finally {
@@ -651,6 +844,21 @@ const ProductDetail = () => {
             <p className="text-gray-600 leading-relaxed text-lg">{product.description}</p>
           </div>
 
+          {/* Specifications Table */}
+          {product.specs && Object.keys(product.specs).length > 0 && (
+            <div className="space-y-4 pt-6 border-t border-gray-100">
+              <h3 className="text-sm font-bold uppercase tracking-widest text-gray-400">Specifications</h3>
+              <div className="grid grid-cols-1 gap-2">
+                {Object.entries(product.specs).map(([key, value]) => (
+                  <div key={key} className="flex justify-between py-2 border-b border-gray-50 text-sm">
+                    <span className="text-gray-500 font-medium">{key}</span>
+                    <span className="text-gray-900 font-bold">{value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="space-y-6 pt-6 border-t border-gray-100">
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
               <div className="flex items-center bg-gray-50 rounded-2xl border border-gray-100 overflow-hidden h-16">
@@ -699,7 +907,27 @@ const ProductDetail = () => {
           </div>
         </div>
 
-        {/* Reviews Section */}
+        {/* Related Products */}
+      {relatedProducts.length > 0 && (
+        <div className="mt-32 space-y-12">
+          <div className="flex justify-between items-end">
+            <div className="space-y-4">
+              <h2 className="text-3xl md:text-4xl font-serif font-bold text-gray-900">You May Also Like</h2>
+              <p className="text-gray-500">Discover matching pieces and similar styles.</p>
+            </div>
+            <Link to="/shop" className="text-gold-600 font-bold hover:text-gold-700 transition-colors">
+              View All
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
+            {relatedProducts.map(p => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Reviews Section */}
         <div className="pt-12 space-y-12 border-t border-gray-100">
             <div className="flex justify-between items-center">
               <h3 className="text-2xl font-serif font-bold">Customer Reviews</h3>
@@ -1411,6 +1639,27 @@ const AdminSettings = () => {
             </div>
 
             <div className="pt-6 border-t border-gray-100 space-y-4">
+              <h4 className="font-bold">Announcement Bar</h4>
+              <div className="flex items-center space-x-4">
+                <input
+                  type="checkbox"
+                  checked={formData.announcementBar?.enabled || false}
+                  onChange={e => setFormData({ ...formData, announcementBar: { ...formData.announcementBar, enabled: e.target.checked } })}
+                  className="w-5 h-5 rounded text-gold-600 focus:ring-gold-500"
+                />
+                <span className="text-sm font-medium">Enable Announcement Bar</span>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Announcement Text</label>
+                <input type="text" value={formData.announcementBar?.text || ''} onChange={e => setFormData({ ...formData, announcementBar: { ...formData.announcementBar, text: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Announcement Link (Optional)</label>
+                <input type="text" value={formData.announcementBar?.link || ''} onChange={e => setFormData({ ...formData, announcementBar: { ...formData.announcementBar, link: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" placeholder="/shop" />
+              </div>
+            </div>
+
+            <div className="pt-6 border-t border-gray-100 space-y-4">
               <h4 className="font-bold">Payment Modes</h4>
               <div className="flex space-x-6">
                 <label className="flex items-center space-x-2 cursor-pointer">
@@ -1528,6 +1777,74 @@ const AdminSettings = () => {
                 </label>
               </div>
             </div>
+          </div>
+
+          <h3 className="text-xl font-serif font-bold pt-6 border-t border-gray-100">Testimonials</h3>
+          <p className="text-sm text-gray-500">Manage customer testimonials shown on the homepage.</p>
+          <div className="space-y-6">
+            {(formData.testimonials || []).map((t, i) => (
+              <div key={i} className="p-4 bg-gray-50 rounded-2xl space-y-4 relative">
+                <button
+                  onClick={() => {
+                    const newT = (formData.testimonials || []).filter((_, idx) => idx !== i);
+                    setFormData({ ...formData, testimonials: newT });
+                  }}
+                  className="absolute top-2 right-2 p-1 text-red-500 hover:bg-red-50 rounded"
+                >
+                  <X size={16} />
+                </button>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-400 uppercase">Customer Name</label>
+                    <input
+                      type="text"
+                      value={t.name || ''}
+                      onChange={e => {
+                        const newT = [...(formData.testimonials || [])];
+                        newT[i].name = e.target.value;
+                        setFormData({ ...formData, testimonials: newT });
+                      }}
+                      className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-400 uppercase">Rating (1-5)</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="5"
+                      value={t.rating || 5}
+                      onChange={e => {
+                        const newT = [...(formData.testimonials || [])];
+                        newT[i].rating = Number(e.target.value);
+                        setFormData({ ...formData, testimonials: newT });
+                      }}
+                      className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-400 uppercase">Content</label>
+                  <textarea
+                    value={t.content || ''}
+                    onChange={e => {
+                      const newT = [...(formData.testimonials || [])];
+                      newT[i].content = e.target.value;
+                      setFormData({ ...formData, testimonials: newT });
+                    }}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm"
+                    rows={2}
+                  />
+                </div>
+              </div>
+            ))}
+            <button
+              onClick={() => setFormData({ ...formData, testimonials: [...(formData.testimonials || []), { name: '', content: '', rating: 5 }] })}
+              className="flex items-center space-x-2 text-gold-600 font-bold hover:text-gold-700"
+            >
+              <Plus size={18} />
+              <span>Add Testimonial</span>
+            </button>
           </div>
 
           <h3 className="text-xl font-serif font-bold pt-6 border-t border-gray-100">Quick Links</h3>
@@ -1871,7 +2188,8 @@ const AdminProducts = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState({
-    name: '', description: '', price: 0, originalPrice: 0, category: '', images: '', stock: 0, featured: false
+    name: '', description: '', price: 0, originalPrice: 0, category: '', images: '', stock: 0, featured: false,
+    specs: '', labels: ''
   });
 
   useEffect(() => {
@@ -1911,6 +2229,12 @@ const AdminProducts = () => {
     const data = {
       ...formData,
       images: (formData.images || '').split(',').map(s => s.trim()).filter(Boolean),
+      labels: (formData.labels || '').split(',').map(s => s.trim()).filter(Boolean),
+      specs: (formData.specs || '').split('\n').reduce((acc: any, line) => {
+        const [key, ...val] = line.split(':');
+        if (key && val.length > 0) acc[key.trim()] = val.join(':').trim();
+        return acc;
+      }, {}),
       createdAt: serverTimestamp()
     };
 
@@ -2002,7 +2326,9 @@ const AdminProducts = () => {
                           category: product.category || '',
                           images: (product.images || []).join(', '),
                           stock: product.stock || 0,
-                          featured: product.featured || false
+                          featured: product.featured || false,
+                          specs: product.specs ? Object.entries(product.specs).map(([k, v]) => `${k}: ${v}`).join('\n') : '',
+                          labels: (product.labels || []).join(', ')
                         });
                         setIsModalOpen(true);
                       }}
@@ -2112,6 +2438,14 @@ const AdminProducts = () => {
                   <div className="flex items-center space-x-3 pt-8">
                     <input type="checkbox" checked={formData.featured || false} onChange={e => setFormData({ ...formData, featured: e.target.checked })} className="w-5 h-5 rounded text-gold-600 focus:ring-gold-500" />
                     <label className="text-sm font-medium">Featured Product</label>
+                  </div>
+                  <div className="space-y-2 col-span-2">
+                    <label className="text-sm font-medium">Product Labels (comma separated, e.g. New, Best Seller)</label>
+                    <input type="text" value={formData.labels || ''} onChange={e => setFormData({ ...formData, labels: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200" placeholder="New, Sale, Limited Edition" />
+                  </div>
+                  <div className="space-y-2 col-span-2">
+                    <label className="text-sm font-medium">Specifications (One per line, format: Key: Value)</label>
+                    <textarea rows={4} value={formData.specs || ''} onChange={e => setFormData({ ...formData, specs: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200 font-mono text-sm" placeholder="Material: 18k Gold&#10;Weight: 5.2g&#10;Stone: Diamond" />
                   </div>
                   <div className="space-y-2 col-span-2">
                     <label className="text-sm font-medium">Product Images</label>
@@ -2699,6 +3033,7 @@ export default function App() {
                 </Routes>
               </main>
               <Footer />
+              <WhatsAppButton />
               <Toaster position="bottom-right" />
             </div>
           </Router>
