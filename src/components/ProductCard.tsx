@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingCart, Heart, Eye } from 'lucide-react';
+import { ShoppingCart, Heart, Eye, Minus, Plus } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Product } from '../types';
 import { useCart, useWishlist } from '../contexts/StoreContext';
@@ -9,18 +9,30 @@ import { toast } from 'sonner';
 export const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
+  const [quantity, setQuantity] = React.useState(1);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    addToCart(product);
-    toast.success(`${product.name} added to cart!`);
+    addToCart(product, quantity);
   };
 
   const handleWishlist = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     toggleWishlist(product.id);
+  };
+
+  const incrementQty = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (quantity < product.stock) setQuantity(prev => prev + 1);
+  };
+
+  const decrementQty = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (quantity > 1) setQuantity(prev => prev - 1);
   };
 
   return (
@@ -33,23 +45,13 @@ export const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
       <Link to={`/product/${product.id}`} className="block">
         <div className="relative aspect-[4/5] overflow-hidden bg-gray-50">
           <img
-            src={product.images[0]}
+            src={product.images?.[0] || 'https://picsum.photos/seed/jewelry/800/1000'}
             alt={product.name}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
             referrerPolicy="no-referrer"
           />
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
           
-          <div className="absolute bottom-4 left-4 right-4 translate-y-12 group-hover:translate-y-0 transition-transform duration-500">
-            <button
-              onClick={handleAddToCart}
-              className="w-full bg-white/90 backdrop-blur-md text-gray-900 py-3 rounded-xl font-medium text-sm flex items-center justify-center space-x-2 hover:bg-gold-600 hover:text-white transition-all shadow-lg"
-            >
-              <ShoppingCart size={18} />
-              <span>Add to Cart</span>
-            </button>
-          </div>
-
           <div className="absolute top-4 right-4 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 translate-x-4 group-hover:translate-x-0">
             <button 
               onClick={handleWishlist}
@@ -74,19 +76,53 @@ export const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
           )}
         </div>
 
-        <div className="p-5 space-y-2">
-          <div className="flex justify-between items-start">
-            <h3 className="text-lg font-serif font-semibold text-gray-900 line-clamp-1 group-hover:text-gold-600 transition-colors">
-              {product.name}
-            </h3>
-          </div>
+        <div className="p-4 space-y-4">
+          <h3 className="text-sm font-serif font-semibold text-gray-900 line-clamp-1 group-hover:text-gold-600 transition-colors">
+            {product.name}
+          </h3>
           <div className="flex items-center justify-between">
-            <p className="text-gold-700 font-medium text-lg">
-              ${product.price.toLocaleString()}
-            </p>
-            <p className="text-xs text-gray-400 uppercase tracking-widest font-medium">
-              {product.category}
-            </p>
+            <div className="space-y-0.5">
+              <p className="text-gold-700 font-bold text-base">
+                ₹{product.price.toLocaleString()}
+              </p>
+              {product.originalPrice && product.originalPrice > product.price && (
+                <p className="text-[10px] text-gray-400 line-through">
+                  ₹{product.originalPrice.toLocaleString()}
+                </p>
+              )}
+            </div>
+            {product.originalPrice && product.originalPrice > product.price && (
+              <span className="text-[10px] font-bold text-red-500 bg-red-50 px-1.5 py-0.5 rounded">
+                {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
+              </span>
+            )}
+          </div>
+
+          {/* Add to Cart Controls - Always visible for better UX */}
+          <div className="space-y-2 pt-2 border-t border-gray-50">
+            <div className="flex items-center bg-gray-50 rounded-xl border border-gray-100 overflow-hidden h-10">
+              <button 
+                onClick={decrementQty}
+                className="px-4 h-full hover:bg-gray-200 transition-colors text-gray-500"
+              >
+                <Minus size={14} />
+              </button>
+              <span className="flex-grow text-center font-bold text-sm text-gray-900">{quantity}</span>
+              <button 
+                onClick={incrementQty}
+                className="px-4 h-full hover:bg-gray-200 transition-colors text-gray-500"
+              >
+                <Plus size={14} />
+              </button>
+            </div>
+            <button
+              onClick={handleAddToCart}
+              disabled={product.stock === 0}
+              className="w-full bg-gray-900 text-white py-3 rounded-xl font-bold text-xs flex items-center justify-center space-x-2 hover:bg-gold-600 transition-all shadow-sm disabled:bg-gray-200 disabled:cursor-not-allowed"
+            >
+              <ShoppingCart size={16} />
+              <span>{product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}</span>
+            </button>
           </div>
         </div>
       </Link>
