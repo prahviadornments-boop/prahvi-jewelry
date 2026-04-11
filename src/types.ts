@@ -34,10 +34,20 @@ export interface Order {
   customerName: string;
   customerEmail: string;
   customerPhone: string;
-  address: string;
+  shippingAddress: {
+    addressLine1: string;
+    addressLine2?: string;
+    city: string;
+    state: string;
+    pincode: string;
+  };
   items: OrderItem[];
+  subtotal: number;
+  shippingFee: number;
   total: number;
   status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
+  paymentMethod: 'whatsapp' | 'card' | 'upi';
+  paymentScreenshot?: string;
   trackingNumber?: string;
   trackingLink?: string;
   createdAt: any;
@@ -129,4 +139,9 @@ export interface StoreSettings {
   };
   upiId?: string;
   upiQrCode?: string;
+  shipping: {
+    freeThreshold: number;
+    flatRate: number;
+    pincodeRates?: { [pincode: string]: number };
+  };
 }
