@@ -60,6 +60,140 @@ const AnnouncementBar = () => {
   );
 };
 
+const OrderTracking = () => {
+  const [orderId, setOrderId] = useState('');
+  const [phone, setPhone] = useState('');
+  const [order, setOrder] = useState<Order | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleTrack = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setOrder(null);
+    try {
+      const q = query(
+        collection(db, 'orders'),
+        where('id', '==', orderId),
+        where('customerPhone', '==', phone)
+      );
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        setOrder(snap.docs[0].data() as Order);
+      } else {
+        toast.error("Order not found. Please check your details.");
+      }
+    } catch (error) {
+      toast.error("Error tracking order.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="pt-40 pb-20 max-w-4xl mx-auto px-4">
+      <div className="text-center space-y-4 mb-12">
+        <h1 className="text-4xl md:text-5xl font-serif font-bold text-gray-900">Track Your Order</h1>
+        <p className="text-gray-500">Enter your order details to see the current status.</p>
+      </div>
+
+      <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-xl mb-12">
+        <form onSubmit={handleTrack} className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase tracking-widest text-gray-400">Order ID</label>
+            <input
+              type="text"
+              required
+              value={orderId}
+              onChange={(e) => setOrderId(e.target.value)}
+              placeholder="e.g. ORD-123456"
+              className="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-gold-400 transition-all font-mono"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase tracking-widest text-gray-400">Phone Number</label>
+            <input
+              type="tel"
+              required
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="e.g. 9876543210"
+              className="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-gold-400 transition-all"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-gray-900 text-white py-4 rounded-2xl font-bold hover:bg-gold-600 transition-all disabled:opacity-50"
+          >
+            {loading ? 'Searching...' : 'Track Order'}
+          </button>
+        </form>
+      </div>
+
+      {order && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white p-8 rounded-3xl border border-gray-100 shadow-xl space-y-8"
+        >
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-gray-100 pb-8">
+            <div>
+              <p className="text-xs font-bold text-gold-600 uppercase tracking-widest">Order Status</p>
+              <h2 className="text-2xl font-serif font-bold text-gray-900 capitalize">{order.status}</h2>
+            </div>
+            <div className="text-right">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Placed On</p>
+              <p className="font-medium">{order.createdAt ? new Date(order.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+            <div className="space-y-6">
+              <h3 className="font-serif font-bold text-xl">Order Items</h3>
+              <div className="space-y-4">
+                {order.items.map((item, i) => (
+                  <div key={i} className="flex items-center space-x-4">
+                    <img src={item.image} className="w-16 h-16 rounded-xl object-cover" alt="" />
+                    <div>
+                      <p className="font-bold text-gray-900">{item.name}</p>
+                      <p className="text-sm text-gray-500">Qty: {item.quantity} × ₹{item.price}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <h3 className="font-serif font-bold text-xl">Shipping Details</h3>
+              <div className="p-6 bg-gray-50 rounded-2xl space-y-4">
+                <div>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Address</p>
+                  <p className="text-sm text-gray-700">
+                    {order.shippingAddress.addressLine1}, {order.shippingAddress.addressLine2 && `${order.shippingAddress.addressLine2}, `}
+                    {order.shippingAddress.city}, {order.shippingAddress.state} - {order.shippingAddress.pincode}
+                  </p>
+                </div>
+                {order.trackingNumber && (
+                  <div>
+                    <p className="text-xs font-bold text-gold-600 uppercase tracking-widest">Tracking Details</p>
+                    <p className="text-sm font-bold text-gray-900">ID: {order.trackingNumber}</p>
+                    {order.trackingLink && (
+                      <a href={order.trackingLink} target="_blank" rel="noopener noreferrer" className="text-gold-600 text-sm hover:underline flex items-center space-x-1 mt-1">
+                        <span>Track Package</span>
+                        <ExternalLink size={14} />
+                      </a>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </div>
+  );
+};
+
 const WhatsAppButton = () => {
   const { settings } = useSettings();
   if (!settings?.whatsapp) return null;
@@ -740,8 +874,13 @@ const ProductDetail = () => {
   const { toggleWishlist, isInWishlist } = useWishlist();
   const [detailQuantity, setDetailQuantity] = useState(1);
 
+  const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
+  const [zoomPos, setZoomPos] = useState({ x: 0, y: 0 });
+  const [isZoomed, setIsZoomed] = useState(false);
+
   const [reviews, setReviews] = useState<Review[]>([]);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [completeTheLook, setCompleteTheLook] = useState<Product[]>([]);
   const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
   const [submittingReview, setSubmittingReview] = useState(false);
   const { user } = useAuth();
@@ -752,7 +891,15 @@ const ProductDetail = () => {
       try {
         const docSnap = await getDoc(doc(db, 'products', id));
         if (docSnap.exists()) {
-          setProduct({ id: docSnap.id, ...docSnap.data() } as Product);
+          const pData = { id: docSnap.id, ...docSnap.data() } as Product;
+          setProduct(pData);
+
+          // Fetch "Complete the Look" if relatedProductIds exist
+          if (pData.relatedProductIds && pData.relatedProductIds.length > 0) {
+            const lookQuery = query(collection(db, 'products'), where('id', 'in', pData.relatedProductIds));
+            const lookSnap = await getDocs(lookQuery);
+            setCompleteTheLook(lookSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product)));
+          }
         }
 
         const rQuery = query(collection(db, 'reviews'), where('productId', '==', id), where('approved', '==', true));
@@ -778,6 +925,13 @@ const ProductDetail = () => {
     };
     fetchProduct();
   }, [id]);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+    const x = ((e.pageX - left) / width) * 100;
+    const y = ((e.pageY - top) / height) * 100;
+    setZoomPos({ x, y });
+  };
 
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -809,16 +963,92 @@ const ProductDetail = () => {
 
   return (
     <div className="pt-32 pb-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Size Guide Modal */}
+      <AnimatePresence>
+        {isSizeGuideOpen && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center px-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsSizeGuideOpen(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative bg-white w-full max-w-2xl rounded-[2rem] overflow-hidden shadow-2xl"
+            >
+              <div className="p-8 space-y-6">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-2xl font-serif font-bold">Ring Size Guide</h2>
+                  <button onClick={() => setIsSizeGuideOpen(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                    <X size={24} />
+                  </button>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-left">
+                    <thead className="bg-gray-50 text-gray-500 uppercase text-[10px] font-bold tracking-widest">
+                      <tr>
+                        <th className="px-4 py-3">Indian Size</th>
+                        <th className="px-4 py-3">Diameter (mm)</th>
+                        <th className="px-4 py-3">Circumference (mm)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {[
+                        { in: "6", d: "14.6", c: "45.9" },
+                        { in: "7", d: "15.0", c: "47.1" },
+                        { in: "8", d: "15.3", c: "48.0" },
+                        { in: "9", d: "15.6", c: "49.0" },
+                        { in: "10", d: "15.9", c: "50.0" },
+                        { in: "11", d: "16.2", c: "50.9" },
+                        { in: "12", d: "16.5", c: "51.8" },
+                        { in: "13", d: "16.8", c: "52.8" },
+                        { in: "14", d: "17.2", c: "54.0" },
+                      ].map((row, i) => (
+                        <tr key={i} className="hover:bg-gold-50/30 transition-colors">
+                          <td className="px-4 py-3 font-bold text-gray-900">{row.in}</td>
+                          <td className="px-4 py-3 text-gray-600">{row.d}</td>
+                          <td className="px-4 py-3 text-gray-600">{row.c}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="p-4 bg-gold-50 rounded-xl text-xs text-gold-700 leading-relaxed">
+                  <strong>How to measure:</strong> Wrap a piece of string or paper around the base of your finger. Mark the point where the ends meet. Measure the string or paper with a ruler (mm). This is the circumference.
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
         {/* Images */}
         <div className="space-y-4">
-          <div className="aspect-[4/5] rounded-3xl overflow-hidden bg-gray-50 border border-gray-100">
+          <div 
+            className="aspect-[4/5] rounded-3xl overflow-hidden bg-gray-50 border border-gray-100 relative cursor-zoom-in"
+            onMouseMove={handleMouseMove}
+            onMouseEnter={() => setIsZoomed(true)}
+            onMouseLeave={() => setIsZoomed(false)}
+          >
             <img
               src={product.images[activeImage]}
               alt={product.name}
-              className="w-full h-full object-cover"
+              className={`w-full h-full object-cover transition-transform duration-200 ${isZoomed ? 'scale-150' : 'scale-100'}`}
+              style={isZoomed ? { transformOrigin: `${zoomPos.x}% ${zoomPos.y}%` } : {}}
               referrerPolicy="no-referrer"
             />
+            {product.videoUrl && (
+              <div className="absolute bottom-4 right-4">
+                <button className="bg-white/90 backdrop-blur p-3 rounded-full shadow-lg text-gold-600 hover:bg-gold-600 hover:text-white transition-all">
+                  <LucideIcons.Play size={20} fill="currentColor" />
+                </button>
+              </div>
+            )}
           </div>
           <div className="grid grid-cols-4 gap-4">
             {product.images.map((img, i) => (
@@ -855,13 +1085,42 @@ const ProductDetail = () => {
           {/* Specifications Table */}
           {product.specs && Object.keys(product.specs).length > 0 && (
             <div className="space-y-4 pt-6 border-t border-gray-100">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-gray-400">Specifications</h3>
+              <div className="flex justify-between items-center">
+                <h3 className="text-sm font-bold uppercase tracking-widest text-gray-400">Specifications</h3>
+                {product.category.toLowerCase().includes('ring') && (
+                  <button 
+                    onClick={() => setIsSizeGuideOpen(true)}
+                    className="text-xs font-bold text-gold-600 hover:underline flex items-center space-x-1"
+                  >
+                    <LucideIcons.Ruler size={14} />
+                    <span>Size Guide</span>
+                  </button>
+                )}
+              </div>
               <div className="grid grid-cols-1 gap-2">
                 {Object.entries(product.specs).map(([key, value]) => (
                   <div key={key} className="flex justify-between py-2 border-b border-gray-50 text-sm">
                     <span className="text-gray-500 font-medium">{key}</span>
                     <span className="text-gray-900 font-bold">{value}</span>
                   </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Complete the Look */}
+          {completeTheLook.length > 0 && (
+            <div className="space-y-6 pt-8 border-t border-gray-100">
+              <h3 className="text-sm font-bold uppercase tracking-widest text-gray-400">Complete the Look</h3>
+              <div className="grid grid-cols-2 gap-4">
+                {completeTheLook.map(item => (
+                  <Link key={item.id} to={`/product/${item.id}`} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-2xl hover:bg-gold-50 transition-colors group">
+                    <img src={item.images[0]} className="w-12 h-12 rounded-lg object-cover" alt="" />
+                    <div>
+                      <p className="text-xs font-bold text-gray-900 line-clamp-1">{item.name}</p>
+                      <p className="text-[10px] text-gold-600 font-bold">₹{item.price.toLocaleString()}</p>
+                    </div>
+                  </Link>
                 ))}
               </div>
             </div>
@@ -1122,6 +1381,62 @@ const Checkout = () => {
     }
   }, [settings]);
   const [loading, setLoading] = useState(false);
+  const [abandonedId, setAbandonedId] = useState<string | null>(null);
+
+  // Track abandoned cart
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (formData.name && formData.phone && cart.length > 0 && !abandonedId) {
+        try {
+          const docRef = await addDoc(collection(db, 'orders'), {
+            customerName: formData.name,
+            customerEmail: formData.email,
+            customerPhone: formData.phone,
+            shippingAddress: {
+              addressLine1: formData.addressLine1,
+              addressLine2: formData.addressLine2,
+              city: formData.city,
+              state: formData.state,
+              pincode: formData.pincode,
+            },
+            items: cart,
+            subtotal: total,
+            shippingFee: shippingFee,
+            total: grandTotal,
+            status: 'pending',
+            paymentMethod: paymentMethod,
+            isAbandoned: true,
+            createdAt: serverTimestamp(),
+          });
+          setAbandonedId(docRef.id);
+        } catch (error) {
+          console.error("Error saving abandoned cart:", error);
+        }
+      } else if (abandonedId && formData.name && formData.phone) {
+        // Update existing abandoned cart
+        try {
+          await updateDoc(doc(db, 'orders', abandonedId), {
+            customerName: formData.name,
+            customerEmail: formData.email,
+            customerPhone: formData.phone,
+            shippingAddress: {
+              addressLine1: formData.addressLine1,
+              addressLine2: formData.addressLine2,
+              city: formData.city,
+              state: formData.state,
+              pincode: formData.pincode,
+            },
+            total: grandTotal,
+            updatedAt: serverTimestamp(),
+          });
+        } catch (error) {
+          console.error("Error updating abandoned cart:", error);
+        }
+      }
+    }, 2000); // Wait 2 seconds after typing
+
+    return () => clearTimeout(timer);
+  }, [formData, cart, abandonedId]);
 
   const handleScreenshotUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1164,9 +1479,17 @@ const Checkout = () => {
         status: 'pending',
         paymentMethod: paymentMethod,
         paymentScreenshot: paymentScreenshot,
+        isAbandoned: false,
         createdAt: serverTimestamp(),
       };
-      const docRef = await addDoc(collection(db, 'orders'), orderData);
+      
+      let docRef;
+      if (abandonedId) {
+        await updateDoc(doc(db, 'orders', abandonedId), orderData);
+        docRef = { id: abandonedId };
+      } else {
+        docRef = await addDoc(collection(db, 'orders'), orderData);
+      }
       
       if (paymentMethod === 'whatsapp') {
         const message = `Hello Prahvi Jewelry! I've just placed an order (ID: ${docRef.id}).\n\nItems:\n${cart.map(item => `- ${item.name} (x${item.quantity})`).join('\n')}\n\nTotal: ₹${grandTotal.toLocaleString()}\n\nPlease confirm my order.`;
@@ -2131,6 +2454,7 @@ const AdminDashboard = () => {
     { name: 'Products', path: '/admin/products', icon: Package },
     { name: 'Categories', path: '/admin/categories', icon: ListTree },
     { name: 'Orders', path: '/admin/orders', icon: ShoppingBag },
+    { name: 'Abandoned Bags', path: '/admin/abandoned', icon: Trash2 },
     { name: 'Reviews', path: '/admin/reviews', icon: MessageSquare },
     { name: 'Policies', path: '/admin/policies', icon: Shield },
     { name: 'Messages', path: '/admin/messages', icon: Mail, badge: messageCount > 0 ? messageCount : null },
@@ -2179,6 +2503,7 @@ const AdminDashboard = () => {
           <Route path="/products" element={<AdminProducts />} />
           <Route path="/categories" element={<AdminCategories />} />
           <Route path="/orders" element={<AdminOrders />} />
+          <Route path="/abandoned" element={<AdminAbandonedCarts />} />
           <Route path="/reviews" element={<AdminReviews />} />
           <Route path="/policies" element={<AdminPolicies />} />
           <Route path="/messages" element={<AdminMessages />} />
@@ -2194,6 +2519,8 @@ const AdminHome = () => {
   const [lowStockProducts, setLowStockProducts] = useState<Product[]>([]);
   const [recentMessages, setRecentMessages] = useState<ContactMessage[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
+  const [bestSellers, setBestSellers] = useState<any[]>([]);
+  const [categoryStats, setCategoryStats] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -2205,16 +2532,41 @@ const AdminHome = () => {
       const orders = oSnap.docs.map(doc => doc.data() as Order);
       const messages = mSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as ContactMessage));
       
+      const totalRevenue = orders.reduce((sum, o) => sum + o.total, 0);
       setStats({
         products: pSnap.size,
         orders: oSnap.size,
-        totalRevenue: orders.reduce((sum, o) => sum + o.total, 0),
+        totalRevenue,
         pendingOrders: orders.filter(o => o.status === 'pending').length,
         messages: mSnap.size
       });
 
       setLowStockProducts(products.filter(p => p.stock < 5));
       setRecentMessages(messages);
+
+      // Best Sellers Calculation
+      const productSales: { [key: string]: { name: string, count: number, revenue: number, image: string } } = {};
+      orders.forEach(order => {
+        order.items.forEach(item => {
+          if (!productSales[item.productId]) {
+            productSales[item.productId] = { name: item.name, count: 0, revenue: 0, image: item.image };
+          }
+          productSales[item.productId].count += item.quantity;
+          productSales[item.productId].revenue += item.price * item.quantity;
+        });
+      });
+      setBestSellers(Object.values(productSales).sort((a, b) => b.count - a.count).slice(0, 5));
+
+      // Category Performance
+      const catPerf: { [key: string]: number } = {};
+      orders.forEach(order => {
+        order.items.forEach(item => {
+          const product = products.find(p => p.id === item.productId);
+          const cat = product?.category || 'Uncategorized';
+          catPerf[cat] = (catPerf[cat] || 0) + (item.price * item.quantity);
+        });
+      });
+      setCategoryStats(Object.entries(catPerf).map(([name, value]) => ({ name, value })));
 
       // Simple chart data generation (last 7 days)
       const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -2261,39 +2613,81 @@ const AdminHome = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Sales Chart */}
-        <div className="lg:col-span-2 bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-6">
-          <div className="flex justify-between items-center">
-            <h3 className="text-xl font-serif font-bold">Weekly Sales Performance</h3>
-            <select className="text-sm border-none bg-gray-50 rounded-lg px-3 py-1 focus:ring-0">
-              <option>Last 7 Days</option>
-              <option>Last 30 Days</option>
-            </select>
+        {/* Sales Chart & Best Sellers */}
+        <div className="lg:col-span-2 space-y-8">
+          <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-6">
+            <div className="flex justify-between items-center">
+              <h3 className="text-xl font-serif font-bold">Weekly Sales Performance</h3>
+              <select className="text-sm border-none bg-gray-50 rounded-lg px-3 py-1 focus:ring-0">
+                <option>Last 7 Days</option>
+                <option>Last 30 Days</option>
+              </select>
+            </div>
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#d4af37" stopOpacity={0.1}/>
+                      <stop offset="95%" stopColor="#d4af37" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} tickFormatter={(value) => `₹${value}`} />
+                  <Tooltip 
+                    contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}}
+                    formatter={(value: any) => [`₹${value.toLocaleString()}`, 'Sales']}
+                  />
+                  <Area type="monotone" dataKey="sales" stroke="#d4af37" strokeWidth={3} fillOpacity={1} fill="url(#colorSales)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
           </div>
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData}>
-                <defs>
-                  <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#d4af37" stopOpacity={0.1}/>
-                    <stop offset="95%" stopColor="#d4af37" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} tickFormatter={(value) => `$${value}`} />
-                <Tooltip 
-                  contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}}
-                  formatter={(value: any) => [`$${value.toLocaleString()}`, 'Sales']}
-                />
-                <Area type="monotone" dataKey="sales" stroke="#d4af37" strokeWidth={3} fillOpacity={1} fill="url(#colorSales)" />
-              </AreaChart>
-            </ResponsiveContainer>
+
+          <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-6">
+            <h3 className="text-xl font-serif font-bold">Best Sellers</h3>
+            <div className="space-y-4">
+              {bestSellers.map((item, i) => (
+                <div key={i} className="flex items-center justify-between p-4 hover:bg-gray-50 rounded-2xl transition-colors">
+                  <div className="flex items-center space-x-4">
+                    <img src={item.image} className="w-12 h-12 rounded-xl object-cover" alt="" />
+                    <div>
+                      <p className="font-bold text-gray-900">{item.name}</p>
+                      <p className="text-xs text-gray-500">{item.count} units sold</p>
+                    </div>
+                  </div>
+                  <p className="font-bold text-gold-600">₹{item.revenue.toLocaleString()}</p>
+                </div>
+              ))}
+              {bestSellers.length === 0 && <p className="text-center text-gray-400 py-8">No sales data yet.</p>}
+            </div>
           </div>
         </div>
 
-        {/* Inventory & Messages */}
+        {/* Inventory, Messages & Categories */}
         <div className="space-y-8">
+          <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-6">
+            <h3 className="text-xl font-serif font-bold">Category Performance</h3>
+            <div className="space-y-4">
+              {categoryStats.map((cat, i) => (
+                <div key={i} className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="font-medium text-gray-600">{cat.name}</span>
+                    <span className="font-bold text-gray-900">₹{cat.value.toLocaleString()}</span>
+                  </div>
+                  <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gold-400 rounded-full" 
+                      style={{ width: `${stats.totalRevenue > 0 ? (cat.value / stats.totalRevenue) * 100 : 0}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+              {categoryStats.length === 0 && <p className="text-center text-gray-400 py-8">No category data yet.</p>}
+            </div>
+          </div>
+
           <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-6">
             <div className="flex items-center space-x-2 text-orange-600">
               <AlertTriangle size={20} />
@@ -2783,6 +3177,81 @@ const AdminCategories = () => {
   );
 };
 
+const AdminAbandonedCarts = () => {
+  const [carts, setCarts] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCarts = async () => {
+      const q = query(collection(db, 'orders'), where('isAbandoned', '==', true), orderBy('createdAt', 'desc'));
+      const snap = await getDocs(q);
+      setCarts(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order)));
+      setLoading(false);
+    };
+    fetchCarts();
+  }, []);
+
+  const sendReminder = (cart: Order) => {
+    const message = `Hello ${cart.customerName}! We noticed you left some beautiful jewelry in your bag at Prahvi Jewelry. Would you like to complete your purchase?\n\nItems: ${cart.items.map(i => i.name).join(', ')}\n\nShop here: ${window.location.origin}/shop`;
+    const url = `https://wa.me/${cart.customerPhone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
+  };
+
+  if (loading) return <div className="pt-20 text-center font-serif text-xl">Loading abandoned bags...</div>;
+
+  return (
+    <div className="space-y-8">
+      <h1 className="text-3xl font-serif font-bold">Abandoned Bags</h1>
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <table className="w-full text-left">
+          <thead className="bg-gray-50 border-b border-gray-100">
+            <tr>
+              <th className="px-6 py-4 text-xs uppercase tracking-widest font-bold text-gray-500">Customer</th>
+              <th className="px-6 py-4 text-xs uppercase tracking-widest font-bold text-gray-500">Items</th>
+              <th className="px-6 py-4 text-xs uppercase tracking-widest font-bold text-gray-500">Total</th>
+              <th className="px-6 py-4 text-xs uppercase tracking-widest font-bold text-gray-500">Date</th>
+              <th className="px-6 py-4 text-xs uppercase tracking-widest font-bold text-gray-500">Action</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {carts.map(cart => (
+              <tr key={cart.id} className="hover:bg-gray-50 transition-colors">
+                <td className="px-6 py-4">
+                  <div className="text-sm font-bold text-gray-900">{cart.customerName}</div>
+                  <div className="text-xs text-gray-500">{cart.customerPhone}</div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="text-xs text-gray-600 max-w-xs truncate">
+                    {cart.items.map(i => i.name).join(', ')}
+                  </div>
+                </td>
+                <td className="px-6 py-4 text-sm font-bold text-gold-600">₹{cart.total.toLocaleString()}</td>
+                <td className="px-6 py-4 text-xs text-gray-400">
+                  {cart.createdAt ? new Date(cart.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}
+                </td>
+                <td className="px-6 py-4">
+                  <button
+                    onClick={() => sendReminder(cart)}
+                    className="flex items-center space-x-2 text-xs font-bold text-green-600 hover:text-green-700 bg-green-50 px-4 py-2 rounded-full transition-all"
+                  >
+                    <Phone size={14} />
+                    <span>Send Reminder</span>
+                  </button>
+                </td>
+              </tr>
+            ))}
+            {carts.length === 0 && (
+              <tr>
+                <td colSpan={5} className="px-6 py-20 text-center text-gray-400">No abandoned bags found.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
 const AdminOrders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -2833,9 +3302,44 @@ const AdminOrders = () => {
     window.open(url, '_blank');
   };
 
+  const exportToCSV = () => {
+    const headers = ['Order ID', 'Date', 'Customer Name', 'Phone', 'Email', 'Total', 'Status', 'Payment Method', 'Address'];
+    const rows = orders.map(o => [
+      o.id,
+      o.createdAt ? new Date(o.createdAt.seconds * 1000).toLocaleDateString() : 'N/A',
+      o.customerName,
+      o.customerPhone,
+      o.customerEmail,
+      o.total,
+      o.status,
+      o.paymentMethod,
+      `"${o.shippingAddress.addressLine1}, ${o.shippingAddress.addressLine2 || ''}, ${o.shippingAddress.city}, ${o.shippingAddress.state} - ${o.shippingAddress.pincode}"`
+    ]);
+
+    const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `orders_${new Date().toLocaleDateString()}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-serif font-bold">Manage Orders</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-serif font-bold">Manage Orders</h1>
+        <button
+          onClick={exportToCSV}
+          className="flex items-center space-x-2 px-6 py-3 bg-gold-600 text-white rounded-xl font-bold hover:bg-gold-500 transition-all shadow-lg shadow-gold-600/20"
+        >
+          <LucideIcons.Download size={18} />
+          <span>Export CSV</span>
+        </button>
+      </div>
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <table className="w-full text-left">
           <thead className="bg-gray-50 border-b border-gray-100">
@@ -3124,7 +3628,8 @@ const AdminMessages = () => {
 };
 
 const Wishlist = () => {
-  const { wishlist } = useWishlist();
+  const { wishlist, toggleWishlist } = useWishlist();
+  const { addToCart } = useCart();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -3163,7 +3668,19 @@ const Wishlist = () => {
         {products.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {products.map(product => (
-              <ProductCard key={product.id} product={product} />
+              <div key={product.id} className="space-y-4">
+                <ProductCard product={product} />
+                <button
+                  onClick={() => {
+                    addToCart(product, 1);
+                    toggleWishlist(product.id);
+                  }}
+                  className="w-full py-3 bg-gray-900 text-white rounded-xl font-bold text-sm hover:bg-gold-600 transition-all flex items-center justify-center space-x-2"
+                >
+                  <ShoppingBag size={16} />
+                  <span>Move to Bag</span>
+                </button>
+              </div>
             ))}
           </div>
         ) : (
