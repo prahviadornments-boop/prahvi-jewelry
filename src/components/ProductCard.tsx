@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingCart, Heart, Eye, Minus, Plus } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Product } from '../types';
 import { useCart, useWishlist } from '../contexts/StoreContext';
 import { toast } from 'sonner';
@@ -10,6 +10,20 @@ export const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const [quantity, setQuantity] = React.useState(1);
+  const [activeImageIndex, setActiveImageIndex] = React.useState(0);
+  const [isHovered, setIsHovered] = React.useState(false);
+
+  React.useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isHovered && product.images && product.images.length > 1) {
+      interval = setInterval(() => {
+        setActiveImageIndex((prev) => (prev + 1) % product.images.length);
+      }, 1500); // Change image every 1.5 seconds on hover
+    } else {
+      setActiveImageIndex(0);
+    }
+    return () => clearInterval(interval);
+  }, [isHovered, product.images]);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -40,16 +54,37 @@ export const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       className="group relative bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-gold-200 transition-all duration-500 hover:shadow-xl hover:shadow-gold-500/5"
     >
       <Link to={`/product/${product.id}`} className="block">
         <div className="relative aspect-[4/5] overflow-hidden bg-gray-50">
-          <img
-            src={product.images?.[0] || 'https://picsum.photos/seed/jewelry/800/1000'}
-            alt={product.name}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-            referrerPolicy="no-referrer"
-          />
+          <AnimatePresence mode="wait">
+            <motion.img
+              key={activeImageIndex}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5 }}
+              src={product.images?.[activeImageIndex] || 'https://picsum.photos/seed/jewelry/800/1000'}
+              alt={product.name}
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              referrerPolicy="no-referrer"
+            />
+          </AnimatePresence>
+          
+          {product.images && product.images.length > 1 && (
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex space-x-1 z-10">
+              {product.images.map((_, i) => (
+                <div 
+                  key={i} 
+                  className={`w-1 h-1 rounded-full transition-all ${i === activeImageIndex ? 'bg-gold-600 w-3' : 'bg-gray-300'}`} 
+                />
+              ))}
+            </div>
+          )}
+
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
           
           <div className="absolute top-4 right-4 flex flex-col space-y-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300 sm:translate-x-4 sm:group-hover:translate-x-0">
