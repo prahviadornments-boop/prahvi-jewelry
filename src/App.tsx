@@ -17,6 +17,24 @@ import { CartProvider, WishlistProvider, SettingsProvider, useCart, useWishlist,
 
 // --- Components ---
 
+const Breadcrumbs = ({ items }: { items: { name: string; path?: string }[] }) => {
+  return (
+    <nav className="flex items-center space-x-2 text-xs font-bold uppercase tracking-widest text-gray-400 mb-8 overflow-x-auto whitespace-nowrap pb-2">
+      <Link to="/" className="hover:text-gold-600 transition-colors">Home</Link>
+      {items.map((item, i) => (
+        <React.Fragment key={i}>
+          <ChevronRight size={12} className="shrink-0" />
+          {item.path ? (
+            <Link to={item.path} className="hover:text-gold-600 transition-colors">{item.name}</Link>
+          ) : (
+            <span className="text-gray-900">{item.name}</span>
+          )}
+        </React.Fragment>
+      ))}
+    </nav>
+  );
+};
+
 const ScrollToTop = () => {
   const { pathname } = useLocation();
   useEffect(() => {
@@ -917,6 +935,7 @@ const ProductDetail = () => {
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const [detailQuantity, setDetailQuantity] = useState(1);
+  const [isVideoOpen, setIsVideoOpen] = useState(false);
 
   const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
   const [zoomPos, setZoomPos] = useState({ x: 0, y: 0 });
@@ -1007,6 +1026,46 @@ const ProductDetail = () => {
 
   return (
     <div className="pt-32 pb-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <Breadcrumbs items={[
+        { name: 'Shop', path: '/shop' },
+        { name: product.category, path: `/shop?category=${product.category}` },
+        { name: product.name }
+      ]} />
+
+      {/* Video Modal */}
+      <AnimatePresence>
+        {isVideoOpen && product.videoUrl && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsVideoOpen(false)}
+              className="absolute inset-0 bg-black/90 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="relative w-full max-w-4xl aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl"
+            >
+              <button 
+                onClick={() => setIsVideoOpen(false)}
+                className="absolute top-4 right-4 z-10 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors"
+              >
+                <X size={24} />
+              </button>
+              <iframe
+                src={product.videoUrl}
+                className="w-full h-full"
+                allow="autoplay; fullscreen; picture-in-picture"
+                allowFullScreen
+              />
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Size Guide Modal */}
       <AnimatePresence>
         {isSizeGuideOpen && (
@@ -1088,8 +1147,15 @@ const ProductDetail = () => {
             />
             {product.videoUrl && (
               <div className="absolute bottom-4 right-4">
-                <button className="bg-white/90 backdrop-blur p-3 rounded-full shadow-lg text-gold-600 hover:bg-gold-600 hover:text-white transition-all">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsVideoOpen(true);
+                  }}
+                  className="bg-white/90 backdrop-blur p-3 rounded-full shadow-lg text-gold-600 hover:bg-gold-600 hover:text-white transition-all flex items-center space-x-2 group"
+                >
                   <LucideIcons.Play size={20} fill="currentColor" />
+                  <span className="text-xs font-bold pr-2 hidden group-hover:block">Watch Video</span>
                 </button>
               </div>
             )}
@@ -1111,7 +1177,14 @@ const ProductDetail = () => {
         <div className="space-y-8">
           <div className="space-y-4">
             <h1 className="text-5xl font-serif font-bold text-gray-900">{product.name}</h1>
-            <p className="text-3xl text-gold-700 font-medium">₹{product.price.toLocaleString()}</p>
+            <div className="flex items-center justify-between">
+              <p className="text-3xl text-gold-700 font-medium">₹{product.price.toLocaleString()}</p>
+              {product.stock > 0 && product.stock <= 5 && (
+                <span className="text-xs font-bold text-red-600 bg-red-50 px-3 py-1 rounded-full animate-pulse">
+                  Only {product.stock} left!
+                </span>
+              )}
+            </div>
             {product.originalPrice && product.originalPrice > product.price && (
               <div className="flex items-center space-x-3">
                 <p className="text-xl text-gray-400 line-through">₹{product.originalPrice.toLocaleString()}</p>
@@ -2893,7 +2966,7 @@ const AdminProducts = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState({
     name: '', description: '', price: 0, originalPrice: 0, category: '', images: '', stock: 0, featured: false,
-    specs: '', labels: ''
+    specs: '', labels: '', videoUrl: '', relatedProductIds: ''
   });
 
   useEffect(() => {
@@ -2934,6 +3007,7 @@ const AdminProducts = () => {
       ...formData,
       images: (formData.images || '').split(',').map(s => s.trim()).filter(Boolean),
       labels: (formData.labels || '').split(',').map(s => s.trim()).filter(Boolean),
+      relatedProductIds: (formData.relatedProductIds || '').split(',').map(s => s.trim()).filter(Boolean),
       specs: (formData.specs || '').split('\n').reduce((acc: any, line) => {
         const [key, ...val] = line.split(':');
         if (key && val.length > 0) acc[key.trim()] = val.join(':').trim();
@@ -2967,7 +3041,7 @@ const AdminProducts = () => {
         <button
           onClick={() => {
             setEditingProduct(null);
-            setFormData({ name: '', description: '', price: 0, originalPrice: 0, category: '', images: '', stock: 0, featured: false });
+            setFormData({ name: '', description: '', price: 0, originalPrice: 0, category: '', images: '', stock: 0, featured: false, specs: '', labels: '', videoUrl: '', relatedProductIds: '' });
             setIsModalOpen(true);
           }}
           className="bg-gray-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-gold-600 transition-all flex items-center space-x-2"
@@ -3033,6 +3107,8 @@ const AdminProducts = () => {
                           images: (product.images || []).join(', '),
                           stock: product.stock || 0,
                           featured: product.featured || false,
+                          videoUrl: product.videoUrl || '',
+                          relatedProductIds: (product.relatedProductIds || []).join(', '),
                           specs: product.specs ? Object.entries(product.specs).map(([k, v]) => `${k}: ${v}`).join('\n') : '',
                           labels: (product.labels || []).join(', ')
                         });
@@ -3144,6 +3220,14 @@ const AdminProducts = () => {
                   <div className="flex items-center space-x-3 pt-8">
                     <input type="checkbox" checked={formData.featured || false} onChange={e => setFormData({ ...formData, featured: e.target.checked })} className="w-5 h-5 rounded text-gold-600 focus:ring-gold-500" />
                     <label className="text-sm font-medium">Featured Product</label>
+                  </div>
+                  <div className="space-y-2 col-span-2">
+                    <label className="text-sm font-medium">Video URL (YouTube/Vimeo Embed Link)</label>
+                    <input type="text" value={formData.videoUrl || ''} onChange={e => setFormData({ ...formData, videoUrl: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200" placeholder="https://www.youtube.com/embed/..." />
+                  </div>
+                  <div className="space-y-2 col-span-2">
+                    <label className="text-sm font-medium">Related Product IDs (comma separated)</label>
+                    <input type="text" value={formData.relatedProductIds || ''} onChange={e => setFormData({ ...formData, relatedProductIds: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200" placeholder="ID1, ID2, ID3" />
                   </div>
                   <div className="space-y-2 col-span-2">
                     <label className="text-sm font-medium">Product Labels (comma separated, e.g. New, Best Seller)</label>
