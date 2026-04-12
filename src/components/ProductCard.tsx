@@ -60,16 +60,16 @@ export const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
     >
       <Link to={`/product/${product.id}`} className="block">
         <div className="relative aspect-[4/5] overflow-hidden bg-gray-50">
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             <motion.img
               key={activeImageIndex}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.5 }}
+              transition={{ duration: 0.4 }}
               src={product.images?.[activeImageIndex] || 'https://picsum.photos/seed/jewelry/800/1000'}
               alt={product.name}
-              className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110"
+              className="absolute inset-0 w-full h-full object-contain transition-transform duration-700 group-hover:scale-110"
               referrerPolicy="no-referrer"
             />
           </AnimatePresence>
