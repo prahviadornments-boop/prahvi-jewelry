@@ -397,6 +397,18 @@ const Navbar = () => {
             >
               My Profile
             </Link>
+            {user && (
+              <button
+                onClick={() => {
+                  logout();
+                  setIsOpen(false);
+                }}
+                className="w-full text-left px-3 py-4 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-lg sm:hidden flex items-center space-x-2"
+              >
+                <LogOut size={18} />
+                <span>Sign Out</span>
+              </button>
+            )}
             {isAdmin && (
               <Link
                 to="/admin"
@@ -2038,6 +2050,12 @@ const Profile = () => {
           <Link to="/wishlist" className="text-sm text-gold-600 font-medium hover:underline flex items-center mt-2">
             <Heart size={14} className="mr-1" /> View Wishlist
           </Link>
+          <button 
+            onClick={() => logout()} 
+            className="text-sm text-red-600 font-medium hover:underline flex items-center mt-2 group"
+          >
+            <LogOut size={14} className="mr-1 group-hover:-translate-x-1 transition-transform" /> Sign Out
+          </button>
         </div>
       </div>
 
