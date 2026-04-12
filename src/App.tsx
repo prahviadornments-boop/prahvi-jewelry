@@ -951,6 +951,7 @@ const ProductDetail = () => {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const [detailQuantity, setDetailQuantity] = useState(1);
@@ -1007,6 +1008,14 @@ const ProductDetail = () => {
     };
     fetchProduct();
   }, [id]);
+
+  useEffect(() => {
+    if (!product || product.images.length <= 1 || !isAutoPlaying || isZoomed) return;
+    const interval = setInterval(() => {
+      setActiveImage((prev) => (prev + 1) % product.images.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [product, isAutoPlaying, isZoomed]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
@@ -1152,18 +1161,31 @@ const ProductDetail = () => {
         {/* Images */}
         <div className="space-y-4">
           <div 
-            className="aspect-[4/5] rounded-3xl overflow-hidden bg-gray-50 border border-gray-100 relative cursor-zoom-in"
+            className="aspect-[4/5] max-h-[500px] md:max-h-[600px] rounded-3xl overflow-hidden bg-gray-50 border border-gray-100 relative cursor-zoom-in group"
             onMouseMove={handleMouseMove}
-            onMouseEnter={() => setIsZoomed(true)}
-            onMouseLeave={() => setIsZoomed(false)}
+            onMouseEnter={() => {
+              setIsZoomed(true);
+              setIsAutoPlaying(false);
+            }}
+            onMouseLeave={() => {
+              setIsZoomed(false);
+              setIsAutoPlaying(true);
+            }}
           >
-            <img
-              src={product.images[activeImage]}
-              alt={product.name}
-              className={`w-full h-full object-contain transition-transform duration-200 ${isZoomed ? 'scale-150' : 'scale-100'}`}
-              style={isZoomed ? { transformOrigin: `${zoomPos.x}% ${zoomPos.y}%` } : {}}
-              referrerPolicy="no-referrer"
-            />
+            <AnimatePresence mode="wait">
+              <motion.img
+                key={activeImage}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.5 }}
+                src={product.images[activeImage]}
+                alt={product.name}
+                className={`w-full h-full object-contain transition-transform duration-200 ${isZoomed ? 'scale-150' : 'scale-100'}`}
+                style={isZoomed ? { transformOrigin: `${zoomPos.x}% ${zoomPos.y}%` } : {}}
+                referrerPolicy="no-referrer"
+              />
+            </AnimatePresence>
             {product.videoUrl && (
               <div className="absolute bottom-4 right-4">
                 <button 
