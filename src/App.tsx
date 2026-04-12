@@ -948,6 +948,7 @@ const Shop = () => {
 
 const ProductDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
@@ -1054,12 +1055,6 @@ const ProductDetail = () => {
 
   return (
     <div className="pt-32 pb-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <Breadcrumbs items={[
-        { name: 'Shop', path: '/shop' },
-        { name: product.category, path: `/shop?category=${product.category}` },
-        { name: product.name }
-      ]} />
-
       {/* Video Modal */}
       <AnimatePresence>
         {isVideoOpen && product.videoUrl && (
@@ -1157,11 +1152,17 @@ const ProductDetail = () => {
         )}
       </AnimatePresence>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+      <div className="flex items-center space-x-2 text-[10px] sm:text-xs text-gray-400 mb-8 uppercase tracking-widest">
+        <Link to="/" className="hover:text-gray-900 transition-colors">Home</Link>
+        <ChevronRight size={10} />
+        <span className="text-gray-900">{product.name}</span>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
         {/* Images */}
         <div className="space-y-4">
           <div 
-            className="aspect-[4/5] max-h-[500px] md:max-h-[600px] rounded-3xl overflow-hidden bg-gray-50 border border-gray-100 relative cursor-zoom-in group"
+            className="relative aspect-square rounded-xl overflow-hidden bg-gray-50 border border-gray-100 cursor-zoom-in group"
             onMouseMove={handleMouseMove}
             onMouseEnter={() => {
               setIsZoomed(true);
@@ -1172,20 +1173,13 @@ const ProductDetail = () => {
               setIsAutoPlaying(true);
             }}
           >
-            <AnimatePresence mode="wait">
-              <motion.img
-                key={activeImage}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.5 }}
-                src={product.images[activeImage]}
-                alt={product.name}
-                className={`w-full h-full object-contain transition-transform duration-200 ${isZoomed ? 'scale-150' : 'scale-100'}`}
-                style={isZoomed ? { transformOrigin: `${zoomPos.x}% ${zoomPos.y}%` } : {}}
-                referrerPolicy="no-referrer"
-              />
-            </AnimatePresence>
+            <img
+              src={product.images[activeImage]}
+              alt={product.name}
+              className={`w-full h-full object-contain transition-transform duration-200 ${isZoomed ? 'scale-150' : 'scale-100'}`}
+              style={isZoomed ? { transformOrigin: `${zoomPos.x}% ${zoomPos.y}%` } : {}}
+              referrerPolicy="no-referrer"
+            />
             {product.videoUrl && (
               <div className="absolute bottom-4 right-4">
                 <button 
@@ -1201,50 +1195,122 @@ const ProductDetail = () => {
               </div>
             )}
           </div>
-          <div className="grid grid-cols-4 gap-4">
-            {product.images.map((img, i) => (
-              <button
-                key={i}
-                onClick={() => setActiveImage(i)}
-                className={`aspect-square rounded-xl overflow-hidden border-2 transition-all ${activeImage === i ? 'border-gold-600' : 'border-transparent opacity-60 hover:opacity-100'}`}
-              >
-                <img src={img} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-              </button>
-            ))}
-          </div>
+          {product.images.length > 1 && (
+            <div className="grid grid-cols-5 gap-2">
+              {product.images.map((img, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActiveImage(i)}
+                  className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${activeImage === i ? 'border-gray-900' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                >
+                  <img src={img} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Info */}
         <div className="space-y-8">
           <div className="space-y-4">
-            <h1 className="text-5xl font-serif font-bold text-gray-900">{product.name}</h1>
-            <div className="flex items-center justify-between">
-              <p className="text-3xl text-gold-700 font-medium">₹{product.price.toLocaleString()}</p>
-              {product.stock > 0 && product.stock <= 5 && (
-                <span className="text-xs font-bold text-red-600 bg-red-50 px-3 py-1 rounded-full animate-pulse">
-                  Only {product.stock} left!
-                </span>
+            <h1 className="text-3xl sm:text-4xl font-serif text-gray-900 lowercase first-letter:uppercase leading-tight">{product.name}</h1>
+            <div className="flex items-center space-x-4">
+              {product.originalPrice && product.originalPrice > product.price && (
+                <span className="text-gray-400 line-through text-xl">₹{product.originalPrice.toLocaleString()}</span>
+              )}
+              <span className="text-3xl font-bold text-gray-900">₹{product.price.toLocaleString()}</span>
+              {product.stock === 0 && (
+                <span className="bg-black text-white text-[10px] px-3 py-1 rounded-full uppercase font-bold tracking-widest">Sold Out</span>
               )}
             </div>
-            {product.originalPrice && product.originalPrice > product.price && (
-              <div className="flex items-center space-x-3">
-                <p className="text-xl text-gray-400 line-through">₹{product.originalPrice.toLocaleString()}</p>
-                <span className="bg-red-100 text-red-600 px-2 py-1 rounded-lg text-sm font-bold">
-                  {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
-                </span>
+          </div>
+
+          {product.stock === 0 && (
+            <div className="flex items-center space-x-2 text-gray-500 text-sm">
+              <div className="w-2 h-2 rounded-full bg-gray-300" />
+              <span>Out of stock</span>
+            </div>
+          )}
+
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row items-stretch gap-4">
+              <div className="flex items-center border border-gray-300 rounded-md h-14 bg-white">
+                <button 
+                  onClick={() => setDetailQuantity(prev => Math.max(1, prev - 1))}
+                  className="px-6 h-full hover:bg-gray-50 transition-colors text-gray-400"
+                >
+                  <Minus size={18} />
+                </button>
+                <span className="w-12 text-center font-bold text-lg">{detailQuantity}</span>
+                <button 
+                  onClick={() => setDetailQuantity(prev => Math.min(product.stock, prev + 1))}
+                  className="px-6 h-full hover:bg-gray-50 transition-colors text-gray-400"
+                >
+                  <Plus size={18} />
+                </button>
               </div>
+              <button
+                onClick={() => product.stock > 0 && addToCart(product, detailQuantity)}
+                disabled={product.stock === 0}
+                className={`flex-grow h-14 rounded-md font-bold uppercase tracking-widest transition-all border ${
+                  product.stock > 0 
+                  ? 'border-gray-900 text-gray-900 hover:bg-gray-50' 
+                  : 'border-gray-200 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                {product.stock > 0 ? 'Add to Shopping Bag' : 'Sold Out'}
+              </button>
+            </div>
+            
+            {product.stock > 0 && (
+              <button 
+                onClick={() => {
+                  addToCart(product, detailQuantity);
+                  navigate('/checkout');
+                }}
+                className="w-full bg-black text-white h-14 rounded-md font-bold uppercase tracking-widest hover:bg-gray-800 transition-all shadow-lg"
+              >
+                Buy It Now
+              </button>
             )}
           </div>
 
-          <div className="prose prose-gold max-w-none">
+          <div className="flex items-center justify-between pt-4">
+            <button 
+              onClick={() => {
+                if (navigator.share) {
+                  navigator.share({
+                    title: product.name,
+                    url: window.location.href
+                  });
+                } else {
+                  navigator.clipboard.writeText(window.location.href);
+                  toast.success("Link copied to clipboard!");
+                }
+              }}
+              className="flex items-center space-x-2 text-gray-500 text-sm hover:text-gray-900 transition-colors font-medium"
+            >
+              <LucideIcons.Share2 size={16} />
+              <span>Share</span>
+            </button>
+            <button 
+              onClick={() => toggleWishlist(product.id)}
+              className={`flex items-center space-x-2 text-sm transition-colors font-medium ${isInWishlist(product.id) ? 'text-red-500' : 'text-gray-500 hover:text-red-500'}`}
+            >
+              <Heart size={16} fill={isInWishlist(product.id) ? "currentColor" : "none"} />
+              <span>{isInWishlist(product.id) ? 'Wishlisted' : 'Add to Wishlist'}</span>
+            </button>
+          </div>
+
+          <div className="prose prose-gold max-w-none pt-8 border-t border-gray-100">
             <p className="text-gray-600 leading-relaxed text-lg">{product.description}</p>
           </div>
 
-          {/* Specifications Table */}
+          {/* Specifications */}
           {product.specs && Object.keys(product.specs).length > 0 && (
-            <div className="space-y-4 pt-6 border-t border-gray-100">
+            <div className="space-y-4 pt-6">
               <div className="flex justify-between items-center">
-                <h3 className="text-sm font-bold uppercase tracking-widest text-gray-400">Specifications</h3>
+                <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400">Specifications</h3>
                 {product.category.toLowerCase().includes('ring') && (
                   <button 
                     onClick={() => setIsSizeGuideOpen(true)}
@@ -1269,11 +1335,11 @@ const ProductDetail = () => {
           {/* Complete the Look */}
           {completeTheLook.length > 0 && (
             <div className="space-y-6 pt-8 border-t border-gray-100">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-gray-400">Complete the Look</h3>
+              <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400">Complete the Look</h3>
               <div className="grid grid-cols-2 gap-4">
                 {completeTheLook.map(item => (
                   <Link key={item.id} to={`/product/${item.id}`} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-2xl hover:bg-gold-50 transition-colors group">
-                    <img src={item.images[0]} className="w-12 h-12 rounded-lg object-cover" alt="" />
+                    <img src={item.images[0]} className="w-12 h-12 rounded-lg object-contain bg-white" alt="" />
                     <div>
                       <p className="text-xs font-bold text-gray-900 line-clamp-1">{item.name}</p>
                       <p className="text-[10px] text-gold-600 font-bold">₹{item.price.toLocaleString()}</p>
@@ -1283,52 +1349,8 @@ const ProductDetail = () => {
               </div>
             </div>
           )}
-
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-                {product.stock > 0 ? (
-                  <>
-                    <div className="flex items-center bg-gray-50 rounded-2xl border border-gray-100 overflow-hidden h-16">
-                      <button 
-                        onClick={() => setDetailQuantity(prev => Math.max(1, prev - 1))}
-                        className="px-6 h-full hover:bg-gray-100 transition-colors"
-                      >
-                        <Minus size={20} />
-                      </button>
-                      <span className="w-12 text-center font-bold text-xl">{detailQuantity}</span>
-                      <button 
-                        onClick={() => setDetailQuantity(prev => Math.min(product.stock, prev + 1))}
-                        className="px-6 h-full hover:bg-gray-100 transition-colors"
-                      >
-                        <Plus size={20} />
-                      </button>
-                    </div>
-                    <button
-                      onClick={() => {
-                        addToCart(product, detailQuantity);
-                      }}
-                      className="flex-grow bg-gray-900 text-white h-16 rounded-2xl font-bold hover:bg-gold-600 transition-all shadow-xl"
-                    >
-                      Add to Shopping Bag
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    disabled
-                    className="flex-grow bg-gray-200 text-gray-500 h-16 rounded-2xl font-bold cursor-not-allowed flex items-center justify-center space-x-2"
-                  >
-                    <AlertTriangle size={20} />
-                    <span>Out of Stock</span>
-                  </button>
-                )}
-                <button 
-                  onClick={() => toggleWishlist(product.id)}
-                  className={`h-16 px-6 border rounded-2xl transition-all flex items-center justify-center ${isInWishlist(product.id) ? 'border-red-100 text-red-500 bg-red-50' : 'border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-100'}`}
-                >
-                  <Heart size={24} fill={isInWishlist(product.id) ? "currentColor" : "none"} />
-                </button>
-              </div>
-          </div>
         </div>
+      </div>
 
         {/* Related Products */}
       {relatedProducts.length > 0 && (
