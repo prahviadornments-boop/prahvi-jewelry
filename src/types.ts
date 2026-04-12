@@ -11,6 +11,8 @@ export interface Product {
   createdAt: any;
   specs?: { [key: string]: string };
   labels?: string[];
+  videoUrl?: string;
+  relatedProductIds?: string[];
 }
 
 export interface Category {
@@ -50,6 +52,7 @@ export interface Order {
   paymentScreenshot?: string;
   trackingNumber?: string;
   trackingLink?: string;
+  isAbandoned?: boolean;
   createdAt: any;
 }
 
@@ -143,5 +146,10 @@ export interface StoreSettings {
     freeThreshold: number;
     flatRate: number;
     pincodeRates?: { [pincode: string]: number };
+  };
+  instagramGallery?: {
+    title: string;
+    description: string;
+    images: { url: string; link?: string }[];
   };
 }
