@@ -464,6 +464,47 @@ const Footer = () => {
 
 // --- Pages ---
 
+const InstagramGallery = ({ settings }: { settings: StoreSettings }) => {
+  if (!settings?.instagramGallery || !settings.instagramGallery.images?.length) return null;
+
+  return (
+    <section className="py-24 bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+        <div className="text-center space-y-4">
+          <h2 className="text-4xl font-serif font-bold text-gray-900">{settings.instagramGallery.title || "Real People, Real Style"}</h2>
+          <p className="text-gray-500 max-w-2xl mx-auto">{settings.instagramGallery.description || "See how our community wears Prahvi Jewelry. Tag us to be featured!"}</p>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {settings.instagramGallery.images.map((item, i) => (
+            <motion.a
+              key={i}
+              href={item.link || "#"}
+              target="_blank"
+              rel="noreferrer"
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1 }}
+              className="group relative aspect-square overflow-hidden rounded-3xl bg-gray-100"
+            >
+              <img
+                src={item.url}
+                alt={`Gallery ${i}`}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                referrerPolicy="no-referrer"
+              />
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <Instagram className="text-white" size={32} />
+              </div>
+            </motion.a>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
 const Home = () => {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const { settings } = useSettings();
@@ -682,6 +723,9 @@ const Home = () => {
           </motion.div>
         </div>
       </section>
+
+      {/* Instagram Gallery */}
+      <InstagramGallery settings={settings} />
 
       {/* Newsletter */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -2294,6 +2338,94 @@ const AdminSettings = () => {
             </button>
           </div>
 
+          <h3 className="text-xl font-serif font-bold pt-6 border-t border-gray-100">Instagram Gallery</h3>
+          <p className="text-sm text-gray-500">Showcase real people wearing your jewelry.</p>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Gallery Title</label>
+              <input type="text" value={formData.instagramGallery?.title || ''} onChange={e => setFormData({ ...formData, instagramGallery: { ...formData.instagramGallery, title: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Gallery Description</label>
+              <input type="text" value={formData.instagramGallery?.description || ''} onChange={e => setFormData({ ...formData, instagramGallery: { ...formData.instagramGallery, description: e.target.value } })} className="w-full px-4 py-2 rounded-xl border border-gray-200 outline-none" />
+            </div>
+            <div className="space-y-4">
+              {(formData.instagramGallery?.images || []).map((img, i) => (
+                <div key={i} className="p-4 bg-gray-50 rounded-2xl space-y-4 relative">
+                  <button
+                    onClick={() => {
+                      const newImgs = (formData.instagramGallery?.images || []).filter((_, idx) => idx !== i);
+                      setFormData({ ...formData, instagramGallery: { ...formData.instagramGallery, images: newImgs } });
+                    }}
+                    className="absolute top-2 right-2 p-1 text-red-500 hover:bg-red-50 rounded"
+                  >
+                    <X size={16} />
+                  </button>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-gray-400 uppercase">Image URL</label>
+                      <div className="flex space-x-2">
+                        <input
+                          type="text"
+                          value={img.url || ''}
+                          onChange={e => {
+                            const newImgs = [...(formData.instagramGallery?.images || [])];
+                            newImgs[i].url = e.target.value;
+                            setFormData({ ...formData, instagramGallery: { ...formData.instagramGallery, images: newImgs } });
+                          }}
+                          className="flex-grow px-3 py-2 rounded-lg border border-gray-200 text-sm"
+                        />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            try {
+                              const url = await uploadToImgBB(file);
+                              const newImgs = [...(formData.instagramGallery?.images || [])];
+                              newImgs[i].url = url;
+                              setFormData({ ...formData, instagramGallery: { ...formData.instagramGallery, images: newImgs } });
+                              toast.success("Image uploaded!");
+                            } catch (err) {
+                              toast.error("Upload failed");
+                            }
+                          }}
+                          className="hidden"
+                          id={`gallery-upload-${i}`}
+                        />
+                        <label htmlFor={`gallery-upload-${i}`} className="p-2 bg-white rounded-lg cursor-pointer hover:bg-gray-100 border border-gray-200">
+                          <Upload size={16} />
+                        </label>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-gray-400 uppercase">Post Link (Optional)</label>
+                      <input
+                        type="text"
+                        value={img.link || ''}
+                        onChange={e => {
+                          const newImgs = [...(formData.instagramGallery?.images || [])];
+                          newImgs[i].link = e.target.value;
+                          setFormData({ ...formData, instagramGallery: { ...formData.instagramGallery, images: newImgs } });
+                        }}
+                        className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm"
+                        placeholder="https://instagram.com/p/..."
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+              <button
+                onClick={() => setFormData({ ...formData, instagramGallery: { ...formData.instagramGallery, images: [...(formData.instagramGallery?.images || []), { url: '', link: '' }] } })}
+                className="flex items-center space-x-2 text-gold-600 font-bold hover:text-gold-700"
+              >
+                <Plus size={18} />
+                <span>Add Image to Gallery</span>
+              </button>
+            </div>
+          </div>
+
           <h3 className="text-xl font-serif font-bold pt-6 border-t border-gray-100">Quick Links</h3>
           <p className="text-sm text-gray-500">Manage the links shown in the footer.</p>
           <div className="space-y-4">
@@ -2521,16 +2653,20 @@ const AdminHome = () => {
   const [chartData, setChartData] = useState<any[]>([]);
   const [bestSellers, setBestSellers] = useState<any[]>([]);
   const [categoryStats, setCategoryStats] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
     const fetchStats = async () => {
       const pSnap = await getDocs(collection(db, 'products'));
       const oSnap = await getDocs(collection(db, 'orders'));
       const mSnap = await getDocs(query(collection(db, 'contact_messages'), orderBy('createdAt', 'desc'), limit(5)));
+      const cSnap = await getDocs(collection(db, 'categories'));
       
       const products = pSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
       const orders = oSnap.docs.map(doc => doc.data() as Order);
       const messages = mSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as ContactMessage));
+      const cats = cSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category));
+      setCategories(cats);
       
       const totalRevenue = orders.reduce((sum, o) => sum + o.total, 0);
       setStats({
@@ -2562,8 +2698,9 @@ const AdminHome = () => {
       orders.forEach(order => {
         order.items.forEach(item => {
           const product = products.find(p => p.id === item.productId);
-          const cat = product?.category || 'Uncategorized';
-          catPerf[cat] = (catPerf[cat] || 0) + (item.price * item.quantity);
+          const categoryId = product?.category;
+          const category = categories.find(c => c.id === categoryId)?.name || 'Uncategorized';
+          catPerf[category] = (catPerf[category] || 0) + (item.price * item.quantity);
         });
       });
       setCategoryStats(Object.entries(catPerf).map(([name, value]) => ({ name, value })));
@@ -2861,7 +2998,9 @@ const AdminProducts = () => {
                     <span className="font-medium text-gray-900">{product.name}</span>
                   </div>
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-600">{product.category}</td>
+                <td className="px-6 py-4 text-sm text-gray-600">
+                  {categories.find(c => c.id === product.category)?.name || product.category || 'Uncategorized'}
+                </td>
                 <td className="px-6 py-4">
                   <div className="space-y-1">
                     <p className="text-sm font-medium text-gold-600">₹{product.price.toLocaleString()}</p>
