@@ -171,7 +171,7 @@ const OrderTracking = () => {
               <div className="space-y-4">
                 {order.items.map((item, i) => (
                   <div key={i} className="flex items-center space-x-4">
-                    <img src={item.image} className="w-16 h-16 rounded-xl object-cover" alt="" />
+                    <img src={item.image} className="w-16 h-16 rounded-xl object-contain bg-gray-50" alt="" />
                     <div>
                       <p className="font-bold text-gray-900">{item.name}</p>
                       <p className="text-sm text-gray-500">Qty: {item.quantity} × ₹{item.price}</p>
@@ -1160,7 +1160,7 @@ const ProductDetail = () => {
             <img
               src={product.images[activeImage]}
               alt={product.name}
-              className={`w-full h-full object-cover transition-transform duration-200 ${isZoomed ? 'scale-150' : 'scale-100'}`}
+              className={`w-full h-full object-contain transition-transform duration-200 ${isZoomed ? 'scale-150' : 'scale-100'}`}
               style={isZoomed ? { transformOrigin: `${zoomPos.x}% ${zoomPos.y}%` } : {}}
               referrerPolicy="no-referrer"
             />
@@ -1429,7 +1429,7 @@ const Cart = () => {
           {cart.map(item => (
             <div key={item.productId} className="flex items-start sm:items-center space-x-4 sm:space-x-6 py-4 sm:py-6 border-b border-gray-100">
               <div className="w-20 h-28 sm:w-24 sm:h-32 rounded-xl overflow-hidden bg-gray-50 shrink-0">
-                <img src={item.image} alt={item.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                <img src={item.image} alt={item.name} className="w-full h-full object-contain" referrerPolicy="no-referrer" />
               </div>
               <div className="flex-grow space-y-1 min-w-0">
                 <h3 className="text-base sm:text-lg font-serif font-bold truncate">{item.name}</h3>
@@ -3094,7 +3094,7 @@ const AdminProducts = () => {
               <tr key={product.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-6 py-4">
                   <div className="flex items-center space-x-3">
-                    <img src={product.images[0]} className="w-10 h-10 rounded-lg object-cover" alt="" />
+                    <img src={product.images[0]} className="w-10 h-10 rounded-lg object-contain bg-gray-50" alt="" />
                     <span className="font-medium text-gray-900">{product.name}</span>
                   </div>
                 </td>
