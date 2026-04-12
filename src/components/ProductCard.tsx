@@ -52,15 +52,12 @@ export const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
           />
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
           
-          <div className="absolute top-4 right-4 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 translate-x-4 group-hover:translate-x-0">
+          <div className="absolute top-4 right-4 flex flex-col space-y-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300 sm:translate-x-4 sm:group-hover:translate-x-0">
             <button 
               onClick={handleWishlist}
               className={`p-2 bg-white/90 backdrop-blur-md rounded-full transition-all shadow-sm ${isInWishlist(product.id) ? 'text-red-500 bg-white' : 'text-gray-600 hover:text-red-500 hover:bg-white'}`}
             >
               <Heart size={18} fill={isInWishlist(product.id) ? "currentColor" : "none"} />
-            </button>
-            <button className="p-2 bg-white/90 backdrop-blur-md rounded-full text-gray-600 hover:text-gold-600 hover:bg-white transition-all shadow-sm">
-              <Eye size={18} />
             </button>
           </div>
           
@@ -83,13 +80,13 @@ export const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
           )}
         </div>
 
-        <div className="p-4 space-y-4">
-          <h3 className="text-sm font-serif font-semibold text-gray-900 line-clamp-1 group-hover:text-gold-600 transition-colors">
+        <div className="p-3 sm:p-4 space-y-3 sm:space-y-4">
+          <h3 className="text-xs sm:text-sm font-serif font-semibold text-gray-900 line-clamp-1 group-hover:text-gold-600 transition-colors">
             {product.name}
           </h3>
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <p className="text-gold-700 font-bold text-base">
+              <p className="text-gold-700 font-bold text-sm sm:text-base">
                 ₹{product.price.toLocaleString()}
               </p>
               {product.originalPrice && product.originalPrice > product.price && (
@@ -107,27 +104,27 @@ export const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
 
           {/* Add to Cart Controls - Always visible for better UX */}
           <div className="space-y-2 pt-2 border-t border-gray-50">
-            <div className="flex items-center bg-gray-50 rounded-xl border border-gray-100 overflow-hidden h-10">
+            <div className="flex items-center bg-gray-50 rounded-xl border border-gray-100 overflow-hidden h-8 sm:h-10">
               <button 
                 onClick={decrementQty}
-                className="px-4 h-full hover:bg-gray-200 transition-colors text-gray-500"
+                className="px-2 sm:px-4 h-full hover:bg-gray-200 transition-colors text-gray-500"
               >
-                <Minus size={14} />
+                <Minus size={12} className="sm:w-3.5 sm:h-3.5" />
               </button>
-              <span className="flex-grow text-center font-bold text-sm text-gray-900">{quantity}</span>
+              <span className="flex-grow text-center font-bold text-xs sm:text-sm text-gray-900">{quantity}</span>
               <button 
                 onClick={incrementQty}
-                className="px-4 h-full hover:bg-gray-200 transition-colors text-gray-500"
+                className="px-2 sm:px-4 h-full hover:bg-gray-200 transition-colors text-gray-500"
               >
-                <Plus size={14} />
+                <Plus size={12} className="sm:w-3.5 sm:h-3.5" />
               </button>
             </div>
             <button
               onClick={handleAddToCart}
               disabled={product.stock === 0}
-              className="w-full bg-gray-900 text-white py-3 rounded-xl font-bold text-xs flex items-center justify-center space-x-2 hover:bg-gold-600 transition-all shadow-sm disabled:bg-gray-200 disabled:cursor-not-allowed"
+              className="w-full bg-gray-900 text-white py-2 sm:py-3 rounded-xl font-bold text-[10px] sm:text-xs flex items-center justify-center space-x-1 sm:space-x-2 hover:bg-gold-600 transition-all shadow-sm disabled:bg-gray-200 disabled:cursor-not-allowed"
             >
-              <ShoppingCart size={16} />
+              <ShoppingCart size={14} className="sm:w-4 sm:h-4" />
               <span>{product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}</span>
             </button>
           </div>
