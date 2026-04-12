@@ -54,25 +54,21 @@ export const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      className="group relative bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-gold-200 transition-all duration-500 hover:shadow-xl hover:shadow-gold-500/5"
+      className="group relative bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-gold-200 transition-all duration-500 hover:shadow-xl hover:shadow-gold-500/5 flex flex-col h-full"
     >
-      <Link to={`/product/${product.id}`} className="block">
+      <Link 
+        to={`/product/${product.id}`} 
+        className="flex flex-col h-full"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
         <div className="relative aspect-[4/5] overflow-hidden bg-gray-50">
-          <AnimatePresence>
-            <motion.img
-              key={activeImageIndex}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.4 }}
-              src={product.images?.[activeImageIndex] || 'https://picsum.photos/seed/jewelry/800/1000'}
-              alt={product.name}
-              className="absolute inset-0 w-full h-full object-contain transition-transform duration-700 group-hover:scale-110"
-              referrerPolicy="no-referrer"
-            />
-          </AnimatePresence>
+          <img
+            src={product.images?.[activeImageIndex] || 'https://picsum.photos/seed/jewelry/800/1000'}
+            alt={product.name}
+            className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110"
+            referrerPolicy="no-referrer"
+          />
           
           {product.images && product.images.length > 1 && (
             <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex space-x-1 z-10">
@@ -115,22 +111,22 @@ export const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
           )}
         </div>
 
-        <div className="p-3 sm:p-4 space-y-3 sm:space-y-4">
-          <h3 className="text-xs sm:text-sm font-serif font-semibold text-gray-900 line-clamp-1 group-hover:text-gold-600 transition-colors">
+        <div className="p-3 sm:p-4 flex flex-col flex-grow space-y-3 sm:space-y-4">
+          <h3 className="text-xs sm:text-sm font-serif font-semibold text-gray-900 line-clamp-2 h-8 sm:h-10 group-hover:text-gold-600 transition-colors">
             {product.name}
           </h3>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between min-h-[40px]">
             <div className="space-y-0.5">
               <p className="text-gold-700 font-bold text-sm sm:text-base">
                 ₹{product.price.toLocaleString()}
               </p>
-              {product.originalPrice && product.originalPrice > product.price && (
+              {!!product.originalPrice && product.originalPrice > product.price && (
                 <p className="text-[10px] text-gray-400 line-through">
                   ₹{product.originalPrice.toLocaleString()}
                 </p>
               )}
             </div>
-            {product.originalPrice && product.originalPrice > product.price && (
+            {!!product.originalPrice && product.originalPrice > product.price && (
               <span className="text-[10px] font-bold text-red-500 bg-red-50 px-1.5 py-0.5 rounded">
                 {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
               </span>
@@ -138,7 +134,7 @@ export const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
           </div>
 
           {/* Add to Cart Controls - Always visible for better UX */}
-          <div className="space-y-2 pt-2 border-t border-gray-50">
+          <div className="mt-auto space-y-2 pt-2 border-t border-gray-50">
             <div className="flex items-center bg-gray-50 rounded-xl border border-gray-100 overflow-hidden h-8 sm:h-10">
               <button 
                 onClick={decrementQty}
