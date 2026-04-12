@@ -266,11 +266,11 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-20 items-center">
           <Link to="/" className="flex items-center space-x-2">
-            <span className="text-2xl font-serif font-bold tracking-tighter text-gray-900 uppercase">
+            <span className="text-lg sm:text-2xl font-serif font-bold tracking-tighter text-gray-900 uppercase">
               {(settings?.siteName || 'Prahvi').split(' ')[0]}
             </span>
             {(settings?.siteName || 'Prahvi Jewelry').split(' ').length > 1 && (
-              <span className="text-xs uppercase tracking-widest text-gold-600 font-medium">
+              <span className="text-[10px] sm:text-xs uppercase tracking-widest text-gold-600 font-medium">
                 {(settings?.siteName || 'Prahvi Jewelry').split(' ').slice(1).join(' ')}
               </span>
             )}
@@ -291,15 +291,15 @@ const Navbar = () => {
             )}
           </div>
 
-          <div className="flex items-center space-x-5">
+          <div className="flex items-center space-x-2 sm:space-x-5">
             <button 
               onClick={() => setIsSearchOpen(true)}
               className="p-2 text-gray-600 hover:text-gold-600 transition-colors"
             >
-              <LucideIcons.Search size={22} />
+              <LucideIcons.Search size={20} className="sm:w-5 sm:h-5" />
             </button>
             <Link to="/wishlist" className="relative p-2 text-gray-600 hover:text-gold-600 transition-colors">
-              <Heart size={22} />
+              <Heart size={20} className="sm:w-5 sm:h-5" />
               {wishlist.length > 0 && (
                 <span className="absolute top-0 right-0 bg-gold-600 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
                   {wishlist.length}
@@ -307,15 +307,15 @@ const Navbar = () => {
               )}
             </Link>
             <Link to="/cart" className="relative p-2 text-gray-600 hover:text-gold-600 transition-colors">
-              <ShoppingCart size={22} />
+              <ShoppingCart size={20} className="sm:w-5 sm:h-5" />
               {cart.length > 0 && (
                 <span className="absolute top-0 right-0 bg-gold-600 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
                   {cart.length}
                 </span>
               )}
             </Link>
-            <Link to="/profile" className="p-2 text-gray-600 hover:text-gold-600 transition-colors">
-              <UserIcon size={22} />
+            <Link to="/profile" className="hidden sm:block p-2 text-gray-600 hover:text-gold-600 transition-colors">
+              <UserIcon size={20} />
             </Link>
             <button onClick={() => setIsOpen(!isOpen)} className="md:hidden p-2 text-gray-600">
               {isOpen ? <X size={24} /> : <Menu size={24} />}
@@ -390,11 +390,18 @@ const Navbar = () => {
                 {link.name}
               </Link>
             ))}
+            <Link
+              to="/profile"
+              onClick={() => setIsOpen(false)}
+              className="block px-3 py-4 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-lg sm:hidden"
+            >
+              My Profile
+            </Link>
             {isAdmin && (
               <Link
                 to="/admin"
                 onClick={() => setIsOpen(false)}
-                className="block px-3 py-4 text-base font-medium text-red-600 hover:bg-red-50 rounded-lg"
+                className="block px-3 py-4 text-base font-bold text-red-600 bg-red-50/50 rounded-lg mt-2"
               >
                 Admin Panel
               </Link>
@@ -1403,36 +1410,37 @@ const Cart = () => {
   }
 
   return (
-    <div className="pt-32 pb-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <h1 className="text-4xl font-serif font-bold mb-12">Shopping Bag</h1>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
-        <div className="lg:col-span-2 space-y-8">
+    <div className="pt-24 sm:pt-32 pb-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h1 className="text-2xl sm:text-4xl font-serif font-bold mb-8 sm:mb-12">Shopping Bag</h1>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 sm:gap-16">
+        <div className="lg:col-span-2 space-y-4 sm:space-y-8">
           {cart.map(item => (
-            <div key={item.productId} className="flex items-center space-x-6 py-6 border-b border-gray-100">
-              <div className="w-24 h-32 rounded-xl overflow-hidden bg-gray-50 shrink-0">
+            <div key={item.productId} className="flex items-start sm:items-center space-x-4 sm:space-x-6 py-4 sm:py-6 border-b border-gray-100">
+              <div className="w-20 h-28 sm:w-24 sm:h-32 rounded-xl overflow-hidden bg-gray-50 shrink-0">
                 <img src={item.image} alt={item.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
               </div>
-              <div className="flex-grow space-y-1">
-                <h3 className="text-lg font-serif font-bold">{item.name}</h3>
-                <p className="text-gold-600 font-medium">₹{item.price.toLocaleString()}</p>
-              </div>
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center border border-gray-200 rounded-lg">
-                  <button onClick={() => updateQuantity(item.productId, item.quantity - 1)} className="p-2 hover:bg-gray-50"><Minus size={16} /></button>
-                  <span className="w-8 text-center font-medium">{item.quantity}</span>
-                  <button onClick={() => updateQuantity(item.productId, item.quantity + 1)} className="p-2 hover:bg-gray-50"><Plus size={16} /></button>
+              <div className="flex-grow space-y-1 min-w-0">
+                <h3 className="text-base sm:text-lg font-serif font-bold truncate">{item.name}</h3>
+                <p className="text-gold-600 font-medium text-sm sm:text-base">₹{item.price.toLocaleString()}</p>
+                
+                <div className="flex items-center justify-between sm:justify-start sm:space-x-8 pt-2">
+                  <div className="flex items-center border border-gray-200 rounded-lg bg-white">
+                    <button onClick={() => updateQuantity(item.productId, item.quantity - 1)} className="p-1.5 sm:p-2 hover:bg-gray-50"><Minus size={14} /></button>
+                    <span className="w-6 sm:w-8 text-center font-medium text-sm">{item.quantity}</span>
+                    <button onClick={() => updateQuantity(item.productId, item.quantity + 1)} className="p-1.5 sm:p-2 hover:bg-gray-50"><Plus size={14} /></button>
+                  </div>
+                  <button onClick={() => removeFromCart(item.productId)} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
+                    <Trash2 size={18} />
+                  </button>
                 </div>
-                <button onClick={() => removeFromCart(item.productId)} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
-                  <Trash2 size={20} />
-                </button>
               </div>
             </div>
           ))}
         </div>
 
         <div className="space-y-8">
-          <div className="bg-gray-50 p-8 rounded-3xl space-y-6">
-            <h3 className="text-xl font-serif font-bold">Order Summary</h3>
+          <div className="bg-gray-50 p-6 sm:p-8 rounded-3xl space-y-6">
+            <h3 className="text-lg sm:text-xl font-serif font-bold">Order Summary</h3>
             <div className="space-y-4 text-sm">
               <div className="flex justify-between text-gray-600">
                 <span>Subtotal</span>
@@ -1442,7 +1450,7 @@ const Cart = () => {
                 <span>Shipping</span>
                 <span className="text-green-600 font-medium">Free</span>
               </div>
-              <div className="border-t border-gray-200 pt-4 flex justify-between text-lg font-bold text-gray-900">
+              <div className="border-t border-gray-200 pt-4 flex justify-between text-base sm:text-lg font-bold text-gray-900">
                 <span>Total</span>
                 <span>₹{total.toLocaleString()}</span>
               </div>
