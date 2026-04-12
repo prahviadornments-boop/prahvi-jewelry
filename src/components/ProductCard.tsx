@@ -69,7 +69,7 @@ export const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
               transition={{ duration: 0.5 }}
               src={product.images?.[activeImageIndex] || 'https://picsum.photos/seed/jewelry/800/1000'}
               alt={product.name}
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110"
               referrerPolicy="no-referrer"
             />
           </AnimatePresence>
