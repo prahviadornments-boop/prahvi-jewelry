@@ -2,16 +2,16 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { doc, getDoc, collection, getDocs, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
-import { Product, StoreSettings, OrderItem } from '../types';
+import { Product, StoreSettings, OrderItem, Variation } from '../types';
 import { toast } from 'sonner';
 
 // --- Cart Context ---
 
 interface CartContextType {
   cart: OrderItem[];
-  addToCart: (product: Product, quantity?: number) => void;
-  removeFromCart: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  addToCart: (product: Product, quantity?: number, variation?: Variation) => void;
+  removeFromCart: (productId: string, variationId?: string) => void;
+  updateQuantity: (productId: string, quantity: number, variationId?: string) => void;
   clearCart: () => void;
   total: number;
 }
@@ -34,35 +34,48 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('cart', JSON.stringify(cart));
   }, [cart]);
 
-  const addToCart = (product: Product, quantity: number = 1) => {
+  const addToCart = (product: Product, quantity: number = 1, variation?: Variation) => {
     setCart(prev => {
-      const existing = prev.find(item => item.productId === product.id);
+      const variationId = variation?.id;
+      const existing = prev.find(item => item.productId === product.id && item.variationId === variationId);
       const newQuantity = existing ? existing.quantity + quantity : quantity;
 
-      if (newQuantity > product.stock) {
-        toast.error(`Only ${product.stock} items available in stock.`);
+      const availableStock = variation ? variation.stock : product.stock;
+      const price = variation?.price || product.price;
+
+      if (newQuantity > availableStock) {
+        toast.error(`Only ${availableStock} items available in stock.`);
         return prev;
       }
 
       toast.success("Added to cart!");
       if (existing) {
         return prev.map(item =>
-          item.productId === product.id ? { ...item, quantity: newQuantity } : item
+          (item.productId === product.id && item.variationId === variationId) ? { ...item, quantity: newQuantity } : item
         );
       }
-      return [...prev, { productId: product.id, name: product.name, price: product.price, quantity, image: product.images[0], stock: product.stock }];
+      return [...prev, { 
+        productId: product.id, 
+        name: product.name, 
+        price, 
+        quantity, 
+        image: variation?.image || product.images[0], 
+        stock: availableStock, 
+        variationId,
+        selectedSize: variation?.name,
+        weight: product.weight
+      }];
     });
   };
 
-  const removeFromCart = (productId: string) => {
-    setCart(prev => prev.filter(item => item.productId !== productId));
+  const removeFromCart = (productId: string, variationId?: string) => {
+    setCart(prev => prev.filter(item => !(item.productId === productId && item.variationId === variationId)));
   };
 
-  const updateQuantity = (productId: string, quantity: number) => {
+  const updateQuantity = (productId: string, quantity: number, variationId?: string) => {
     if (quantity < 1) return;
     setCart(prev => prev.map(item => {
-      if (item.productId === productId) {
-        // Only check stock if increasing quantity
+      if (item.productId === productId && item.variationId === variationId) {
         if (quantity > item.quantity && item.stock !== undefined && item.stock !== null && quantity > item.stock) {
           toast.error(`Only ${item.stock} items available in stock.`);
           return item;
