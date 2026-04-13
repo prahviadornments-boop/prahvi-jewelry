@@ -1,96 +1,171 @@
-{
-  "couriers": {
-    "delhivery": {
-      "id": "delhivery",
-      "name": "Delhivery",
-      "baseRate": 60,
-      "weightSlabs": [
-        { "maxWeight": 0.5, "rate": 40 },
-        { "maxWeight": 1, "rate": 60 },
-        { "maxWeight": 2, "rate": 80 },
-        { "maxWeight": 5, "rate": 120 },
-        { "maxWeight": 10, "rate": 200 },
-        { "maxWeight": 50, "rate": 500 }
-      ],
-      "zoneMultipliers": {
-        "metro": 1.0,
-        "tier1": 1.2,
-        "tier2": 1.5,
-        "tier3": 2.0,
-        "remote": 2.5
-      },
-      "estimatedDays": {
-        "metro": 1,
-        "tier1": 2,
-        "tier2": 3,
-        "tier3": 4,
-        "remote": 5
-      }
-    },
-    "fedex": {
-      "id": "fedex",
-      "name": "FedEx",
-      "baseRate": 100,
-      "weightSlabs": [
-        { "maxWeight": 0.5, "rate": 80 },
-        { "maxWeight": 1, "rate": 100 },
-        { "maxWeight": 2, "rate": 150 },
-        { "maxWeight": 5, "rate": 250 },
-        { "maxWeight": 10, "rate": 400 },
-        { "maxWeight": 50, "rate": 1000 }
-      ],
-      "zoneMultipliers": {
-        "metro": 1.0,
-        "tier1": 1.15,
-        "tier2": 1.4,
-        "tier3": 1.8,
-        "remote": 2.2
-      },
-      "estimatedDays": {
-        "metro": 1,
-        "tier1": 2,
-        "tier2": 3,
-        "tier3": 4,
-        "remote": 6
-      }
-    },
-    "ecomexpress": {
-      "id": "ecomexpress",
-      "name": "Ecom Express",
-      "baseRate": 55,
-      "weightSlabs": [
-        { "maxWeight": 0.5, "rate": 35 },
-        { "maxWeight": 1, "rate": 55 },
-        { "maxWeight": 2, "rate": 75 },
-        { "maxWeight": 5, "rate": 110 },
-        { "maxWeight": 10, "rate": 180 },
-        { "maxWeight": 50, "rate": 450 }
-      ],
-      "zoneMultipliers": {
-        "metro": 1.0,
-        "tier1": 1.25,
-        "tier2": 1.6,
-        "tier3": 2.1,
-        "remote": 2.7
-      },
-      "estimatedDays": {
-        "metro": 1,
-        "tier1": 2,
-        "tier2": 3,
-        "tier3": 4,
-        "remote": 5
-      }
-    }
-  },
-  "pincodes": {
-    "110001": "metro", "110002": "metro", "110003": "metro", "110004": "metro", "110005": "metro",
-    "400001": "metro", "400002": "metro", "400003": "metro", "400004": "metro", "400005": "metro",
-    "560001": "metro", "560002": "metro", "560003": "metro", "560004": "metro", "560005": "metro",
-    "411001": "tier1", "411002": "tier1", "411003": "tier1", "411004": "tier1", "411005": "tier1",
-    "500001": "tier1", "500002": "tier1", "500003": "tier1", "500004": "tier1", "500005": "tier1",
-    "201301": "tier2", "201302": "tier2", "201303": "tier2", "201304": "tier2", "201305": "tier2",
-    "282001": "tier2", "282002": "tier2", "282003": "tier2", "282004": "tier2", "282005": "tier2",
-    "271001": "tier3", "271002": "tier3", "271003": "tier3", "271004": "tier3", "271005": "tier3",
-    "842001": "remote", "842002": "remote", "842003": "remote", "842004": "remote", "842005": "remote"
-  }
+export interface Variation {
+  id: string;
+  name: string; // e.g., "Small", "Red", "Gold"
+  type: 'size' | 'color' | 'material' | 'other';
+  price?: number; // Override base price if set
+  stock: number; // Stock for this specific variation
+  image?: string; // Optional image for this variation
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  originalPrice?: number;
+  category: string;
+  images: string[];
+  stock: number;
+  featured: boolean;
+  createdAt: any;
+  specs?: { [key: string]: string };
+  labels?: string[];
+  videoUrl?: string;
+  relatedProductIds?: string[];
+  sizes?: string[]; // Deprecated, use variations
+  variations?: Variation[];
+  weight?: number; // in kg
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  description: string;
+  image: string;
+}
+
+export interface OrderItem {
+  productId: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image: string;
+  stock: number;
+  selectedSize?: string;
+  variationId?: string;
+  weight?: number; // in kg
+}
+
+export interface Order {
+  id: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  shippingAddress: {
+    addressLine1: string;
+    addressLine2?: string;
+    city: string;
+    state: string;
+    pincode: string;
+  };
+  items: OrderItem[];
+  subtotal: number;
+  shippingFee: number;
+  total: number;
+  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
+  paymentMethod: 'whatsapp' | 'card' | 'upi';
+  paymentScreenshot?: string;
+  trackingNumber?: string;
+  trackingLink?: string;
+  isAbandoned?: boolean;
+  createdAt: any;
+}
+
+export interface Review {
+  id: string;
+  productId: string;
+  customerName: string;
+  rating: number;
+  comment: string;
+  approved: boolean;
+  createdAt: any;
+}
+
+export interface Policy {
+  id: string;
+  title: string;
+  content: string;
+  type: 'shipping' | 'return' | 'privacy' | 'terms';
+}
+
+export interface ContactMessage {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  subject: string;
+  message: string;
+  createdAt: any;
+}
+
+export interface Feature {
+  icon: string;
+  title: string;
+  desc: string;
+}
+
+export interface StoreSettings {
+  siteName: string;
+  siteDescription: string;
+  address: string;
+  phone: string;
+  email: string;
+  workingHours: string;
+  instagram: string;
+  facebook: string;
+  whatsapp: string;
+  announcementBar?: {
+    text: string;
+    link?: string;
+    enabled: boolean;
+  };
+  hero: {
+    title: string;
+    subtitle: string;
+    description: string;
+    image: string;
+  };
+  about: {
+    title: string;
+    content: string;
+    image: string;
+  };
+  categorySection: {
+    title: string;
+    description: string;
+  };
+  newsletter: {
+    title: string;
+    description: string;
+  };
+  featuredSection: {
+    title: string;
+    description: string;
+  };
+  features: Feature[];
+  testimonials?: {
+    name: string;
+    content: string;
+    rating: number;
+    image?: string;
+  }[];
+  quickLinks?: { name: string; path: string }[];
+  paymentModes: {
+    whatsapp: boolean;
+    card: boolean;
+    upi: boolean;
+  };
+  upiId?: string;
+  upiQrCode?: string;
+  shipping: {
+    freeThreshold: number;
+    flatRate: number;
+    pincodeRates?: { [pincode: string]: number };
+  };
+  instagramGallery?: {
+    title: string;
+    description: string;
+    images: { url: string; link?: string }[];
+  };
+  categoryVisibility?: { [key: string]: boolean };
 }

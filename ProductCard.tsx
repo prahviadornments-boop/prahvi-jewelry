@@ -5,13 +5,28 @@ import { auth, db, storage, loginWithGoogle, logout } from './firebase';
 import { doc, getDoc, collection, query, where, limit, getDocs, addDoc, serverTimestamp, updateDoc, deleteDoc, orderBy, setDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Toaster, toast } from 'sonner';
-import * as LucideIcons from 'lucide-react';
-import { ShoppingCart, User as UserIcon, Menu, X, Phone, Instagram, Facebook, Mail, MapPin, ChevronRight, Star, Trash2, Plus, Minus, Heart, Shield, Truck, RefreshCcw, LayoutDashboard, Package, ListTree, ShoppingBag, MessageSquare, Settings, LogOut, ExternalLink, Upload, AlertTriangle, TrendingUp, CreditCard, Sparkles, Coins, Diamond, Flower, Circle, Watch, Hexagon, Gift, MoreHorizontal } from 'lucide-react';
+import { 
+  ShoppingCart, User as UserIcon, Menu, X, Phone, Instagram, Facebook, Mail, MapPin, 
+  ChevronRight, Star, Trash2, Plus, Minus, Heart, Shield, Truck, RefreshCcw, 
+  LayoutDashboard, Package, ListTree, ShoppingBag, MessageSquare, Settings, 
+  LogOut, ExternalLink, Upload, AlertTriangle, TrendingUp, CreditCard, Sparkles, 
+  Coins, Diamond, Flower, Circle, Watch, Hexagon, Gift, MoreHorizontal, Edit2, Download,
+  MessageCircle, Search, Info, Play, Share2, Ruler, QrCode, CheckCircle
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Product, Category, Order, Review, Policy, ContactMessage, OrderItem, StoreSettings, Feature } from './types';
+import { Product, Category, Order, Review, Policy, ContactMessage, OrderItem, StoreSettings, Feature, Variation } from './types';
 import { ProductCard } from './components/ProductCard';
 import { CartProvider, WishlistProvider, SettingsProvider, useCart, useWishlist, useSettings, useAuth } from './contexts/StoreContext';
+
+const LucideIcons: any = {
+  ShoppingCart, User: UserIcon, Menu, X, Phone, Instagram, Facebook, Mail, MapPin, 
+  ChevronRight, Star, Trash2, Plus, Minus, Heart, Shield, Truck, RefreshCcw, 
+  LayoutDashboard, Package, ListTree, ShoppingBag, MessageSquare, Settings, 
+  LogOut, ExternalLink, Upload, AlertTriangle, TrendingUp, CreditCard, Sparkles, 
+  Coins, Diamond, Flower, Circle, Watch, Hexagon, Gift, MoreHorizontal, Edit2, Download,
+  MessageCircle, Search, Info, Play, Share2, Ruler, QrCode, CheckCircle
+};
 
 // --- Components ---
 
@@ -59,6 +74,70 @@ const uploadToImgBB = async (file: File) => {
   } else {
     throw new Error(result.error?.message || 'Upload failed');
   }
+};
+
+const ConfirmModal = ({ 
+  isOpen, 
+  onClose, 
+  onConfirm, 
+  title, 
+  message, 
+  confirmText = "Confirm", 
+  cancelText = "Cancel",
+  variant = "danger"
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  onConfirm: () => void; 
+  title: string; 
+  message: string; 
+  confirmText?: string; 
+  cancelText?: string;
+  variant?: "danger" | "primary"
+}) => {
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }} 
+            onClick={onClose} 
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm" 
+          />
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9, y: 20 }} 
+            animate={{ opacity: 1, scale: 1, y: 0 }} 
+            exit={{ opacity: 0, scale: 0.9, y: 20 }} 
+            className="relative bg-white w-full max-w-sm rounded-3xl shadow-2xl p-8 space-y-6 text-center"
+          >
+            <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center ${variant === 'danger' ? 'bg-red-50 text-red-500' : 'bg-gold-50 text-gold-600'}`}>
+              {variant === 'danger' ? <Trash2 size={32} /> : <AlertTriangle size={32} />}
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-serif font-bold text-gray-900">{title}</h3>
+              <p className="text-sm text-gray-500 leading-relaxed">{message}</p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button 
+                onClick={onClose}
+                className="flex-1 px-6 py-3 rounded-xl font-bold text-gray-600 bg-gray-50 hover:bg-gray-100 transition-all"
+              >
+                {cancelText}
+              </button>
+              <button 
+                onClick={() => { onConfirm(); onClose(); }}
+                className={`flex-1 px-6 py-3 rounded-xl font-bold text-white transition-all shadow-lg ${variant === 'danger' ? 'bg-red-500 hover:bg-red-600 shadow-red-500/20' : 'bg-gold-600 hover:bg-gold-500 shadow-gold-600/20'}`}
+              >
+                {confirmText}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
 };
 
 const AnnouncementBar = () => {
@@ -226,7 +305,7 @@ const WhatsAppButton = () => {
       className="fixed bottom-8 right-8 z-[100] bg-green-500 text-white p-4 rounded-full shadow-2xl hover:bg-green-600 transition-all hover:scale-110 group"
       aria-label="Chat on WhatsApp"
     >
-      <LucideIcons.MessageCircle size={28} />
+      <MessageCircle size={28} />
       <span className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-white text-gray-900 px-4 py-2 rounded-xl text-sm font-bold shadow-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-gray-100">
         Chat with us!
       </span>
@@ -297,7 +376,7 @@ const Navbar = () => {
               onClick={() => setIsSearchOpen(true)}
               className="p-2 text-gray-600 hover:text-gold-600 transition-colors"
             >
-              <LucideIcons.Search size={20} className="sm:w-5 sm:h-5" />
+              <Search size={20} className="sm:w-5 sm:h-5" />
             </button>
             <Link to="/wishlist" className="relative p-2 text-gray-600 hover:text-gold-600 transition-colors">
               <Heart size={20} className="sm:w-5 sm:h-5" />
@@ -336,7 +415,7 @@ const Navbar = () => {
           >
             <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between border-b border-gray-100">
               <form onSubmit={handleSearch} className="flex-grow flex items-center">
-                <LucideIcons.Search size={24} className="text-gray-400 mr-4" />
+                <Search size={24} className="text-gray-400 mr-4" />
                 <input
                   autoFocus
                   type="text"
@@ -974,6 +1053,7 @@ const ProductDetail = () => {
   const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
   const [submittingReview, setSubmittingReview] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string>('');
+  const [selectedVariation, setSelectedVariation] = useState<Variation | null>(null);
   const [showSizeConfirm, setShowSizeConfirm] = useState(false);
   const [isBuyNowPending, setIsBuyNowPending] = useState(false);
   const { user } = useAuth();
@@ -1179,7 +1259,7 @@ const ProductDetail = () => {
               className="relative bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center space-y-6"
             >
               <div className="w-16 h-16 bg-gold-50 text-gold-600 rounded-full flex items-center justify-center mx-auto">
-                <LucideIcons.Info size={32} />
+                <Info size={32} />
               </div>
               <div className="space-y-2">
                 <h3 className="text-xl font-serif font-bold">No Size Selected</h3>
@@ -1251,7 +1331,7 @@ const ProductDetail = () => {
                   }}
                   className="bg-white/90 backdrop-blur p-3 rounded-full shadow-lg text-gold-600 hover:bg-gold-600 hover:text-white transition-all flex items-center space-x-2 group"
                 >
-                  <LucideIcons.Play size={20} fill="currentColor" />
+                  <Play size={20} fill="currentColor" />
                   <span className="text-xs font-bold pr-2 hidden group-hover:block">Watch Video</span>
                 </button>
               </div>
@@ -1277,17 +1357,17 @@ const ProductDetail = () => {
           <div className="space-y-4">
             <h1 className="text-3xl sm:text-4xl font-serif text-gray-900 lowercase first-letter:uppercase leading-tight">{product.name}</h1>
             <div className="flex items-center space-x-4">
-              {product.originalPrice && product.originalPrice > product.price && (
+              {product.originalPrice && product.originalPrice > (selectedVariation?.price || product.price) && (
                 <span className="text-gray-400 line-through text-xl">₹{product.originalPrice.toLocaleString()}</span>
               )}
-              <span className="text-3xl font-bold text-gray-900">₹{product.price.toLocaleString()}</span>
-              {product.stock === 0 && (
+              <span className="text-3xl font-bold text-gray-900">₹{(selectedVariation?.price || product.price).toLocaleString()}</span>
+              {(selectedVariation ? selectedVariation.stock : product.stock) === 0 && (
                 <span className="bg-black text-white text-[10px] px-3 py-1 rounded-full uppercase font-bold tracking-widest">Sold Out</span>
               )}
             </div>
           </div>
 
-          {product.stock === 0 && (
+          {(selectedVariation ? selectedVariation.stock : product.stock) === 0 && (
             <div className="flex items-center space-x-2 text-gray-500 text-sm">
               <div className="w-2 h-2 rounded-full bg-gray-300" />
               <span>Out of stock</span>
@@ -1305,7 +1385,7 @@ const ProductDetail = () => {
                 </button>
                 <span className="w-12 text-center font-bold text-lg">{detailQuantity}</span>
                 <button 
-                  onClick={() => setDetailQuantity(prev => Math.min(product.stock, prev + 1))}
+                  onClick={() => setDetailQuantity(prev => Math.min(selectedVariation ? selectedVariation.stock : product.stock, prev + 1))}
                   className="px-6 h-full hover:bg-gray-50 transition-colors text-gray-400"
                 >
                   <Plus size={18} />
@@ -1313,33 +1393,43 @@ const ProductDetail = () => {
               </div>
               <button
                 onClick={() => {
+                  if (product.variations && product.variations.length > 0 && !selectedVariation) {
+                    toast.error("Please select a variation");
+                    return;
+                  }
                   if (product.sizes && product.sizes.length > 0 && !selectedSize) {
                     setIsBuyNowPending(false);
                     setShowSizeConfirm(true);
                     return;
                   }
-                  if (product.stock > 0) addToCart(product, detailQuantity, selectedSize);
+                  if ((selectedVariation ? selectedVariation.stock : product.stock) > 0) {
+                    addToCart(product, detailQuantity, selectedVariation || undefined);
+                  }
                 }}
-                disabled={product.stock === 0}
+                disabled={(selectedVariation ? selectedVariation.stock : product.stock) === 0}
                 className={`flex-grow h-14 rounded-md font-bold uppercase tracking-widest transition-all border ${
-                  product.stock > 0 
+                  (selectedVariation ? selectedVariation.stock : product.stock) > 0 
                   ? 'border-gray-900 text-gray-900 hover:bg-gray-50' 
                   : 'border-gray-200 text-gray-400 cursor-not-allowed'
                 }`}
               >
-                {product.stock > 0 ? 'Add to Shopping Bag' : 'Sold Out'}
+                {(selectedVariation ? selectedVariation.stock : product.stock) > 0 ? 'Add to Shopping Bag' : 'Sold Out'}
               </button>
             </div>
             
-            {product.stock > 0 && (
+            {(selectedVariation ? selectedVariation.stock : product.stock) > 0 && (
               <button 
                 onClick={() => {
+                  if (product.variations && product.variations.length > 0 && !selectedVariation) {
+                    toast.error("Please select a variation");
+                    return;
+                  }
                   if (product.sizes && product.sizes.length > 0 && !selectedSize) {
                     setIsBuyNowPending(true);
                     setShowSizeConfirm(true);
                     return;
                   }
-                  addToCart(product, detailQuantity, selectedSize);
+                  addToCart(product, detailQuantity, selectedVariation || undefined);
                   navigate('/checkout');
                 }}
                 className="w-full bg-black text-white h-14 rounded-md font-bold uppercase tracking-widest hover:bg-gray-800 transition-all shadow-lg"
@@ -1364,7 +1454,7 @@ const ProductDetail = () => {
               }}
               className="flex items-center space-x-2 text-gray-500 text-sm hover:text-gray-900 transition-colors font-medium"
             >
-              <LucideIcons.Share2 size={16} />
+              <Share2 size={16} />
               <span>Share</span>
             </button>
             <button 
@@ -1380,6 +1470,41 @@ const ProductDetail = () => {
             <p className="text-gray-600 leading-relaxed text-lg">{product.description}</p>
           </div>
 
+          {/* Variation Selection */}
+          {product.variations && product.variations.length > 0 && (
+            <div className="space-y-4 pt-8 border-t border-gray-100">
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Select Variation</label>
+              <div className="flex flex-wrap gap-3">
+                {product.variations.map(variation => (
+                  <button
+                    key={variation.id}
+                    onClick={() => {
+                      setSelectedVariation(variation);
+                      setDetailQuantity(1);
+                    }}
+                    className={`px-6 py-3 rounded-xl border-2 text-sm font-bold transition-all flex flex-col items-start min-w-[120px] ${
+                      selectedVariation?.id === variation.id 
+                      ? 'border-gold-600 bg-gold-50 text-gold-600' 
+                      : 'border-gray-100 text-gray-600 hover:border-gray-200'
+                    }`}
+                  >
+                    <span className="text-xs uppercase tracking-wider opacity-60">{variation.type}</span>
+                    <span className="text-base">{variation.name}</span>
+                    {variation.price && (
+                      <span className="text-xs mt-1">₹{variation.price.toLocaleString()}</span>
+                    )}
+                    {variation.stock <= 5 && variation.stock > 0 && (
+                      <span className="text-[10px] text-red-500 mt-1">Only {variation.stock} left!</span>
+                    )}
+                    {variation.stock === 0 && (
+                      <span className="text-[10px] text-gray-400 mt-1">Sold Out</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Size Selection */}
           {product.sizes && product.sizes.length > 0 && (
             <div className="space-y-4 pt-8 border-t border-gray-100">
@@ -1389,7 +1514,7 @@ const ProductDetail = () => {
                   onClick={() => setIsSizeGuideOpen(true)}
                   className="text-[10px] font-bold text-gold-600 hover:underline flex items-center space-x-1"
                 >
-                  <LucideIcons.Ruler size={12} />
+                  <Ruler size={12} />
                   <span>Size Guide</span>
                 </button>
               </div>
@@ -1421,7 +1546,7 @@ const ProductDetail = () => {
                     onClick={() => setIsSizeGuideOpen(true)}
                     className="text-xs font-bold text-gold-600 hover:underline flex items-center space-x-1"
                   >
-                    <LucideIcons.Ruler size={14} />
+                    <Ruler size={14} />
                     <span>Size Guide</span>
                   </button>
                 )}
@@ -1550,9 +1675,10 @@ const ProductDetail = () => {
     };
 
 const Cart = () => {
-  const { cart, removeFromCart, updateQuantity, total } = useCart();
+  const { cart, removeFromCart, updateQuantity, total, clearCart } = useCart();
   const { settings } = useSettings();
   const navigate = useNavigate();
+  const [isClearModalOpen, setIsClearModalOpen] = useState(false);
 
   const shippingFee = (total >= (settings.shipping?.freeThreshold || 5000)) ? 0 : (settings.shipping?.flatRate || 0);
   const grandTotal = total + shippingFee;
@@ -1603,28 +1729,46 @@ const Cart = () => {
 
   return (
     <div className="pt-24 sm:pt-32 pb-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <h1 className="text-2xl sm:text-4xl font-serif font-bold mb-8 sm:mb-12">Shopping Bag</h1>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 sm:mb-12">
+        <h1 className="text-2xl sm:text-4xl font-serif font-bold">Shopping Bag</h1>
+        <button
+          onClick={() => setIsClearModalOpen(true)}
+          className="text-sm font-bold text-red-500 hover:text-red-600 flex items-center space-x-2 px-4 py-2 bg-red-50 rounded-full transition-all"
+        >
+          <Trash2 size={16} />
+          <span>Clear Bag</span>
+        </button>
+      </div>
+
+      <ConfirmModal 
+        isOpen={isClearModalOpen}
+        onClose={() => setIsClearModalOpen(false)}
+        onConfirm={clearCart}
+        title="Clear Shopping Bag?"
+        message="Are you sure you want to remove all items from your bag? This action cannot be undone."
+        confirmText="Yes, Clear Bag"
+      />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 sm:gap-16">
         <div className="lg:col-span-2 space-y-4 sm:space-y-8">
           {cart.map(item => (
-            <div key={`${item.productId}-${item.selectedSize || 'no-size'}`} className="flex items-start sm:items-center space-x-4 sm:space-x-6 py-4 sm:py-6 border-b border-gray-100">
+            <div key={`${item.productId}-${item.variationId || 'no-var'}`} className="flex items-start sm:items-center space-x-4 sm:space-x-6 py-4 sm:py-6 border-b border-gray-100">
               <div className="w-20 h-28 sm:w-24 sm:h-32 rounded-xl overflow-hidden bg-gray-50 shrink-0">
                 <img src={item.image} alt={item.name} className="w-full h-full object-contain" referrerPolicy="no-referrer" />
               </div>
               <div className="flex-grow space-y-1 min-w-0">
                 <h3 className="text-base sm:text-lg font-serif font-bold truncate">{item.name}</h3>
                 {item.selectedSize && (
-                  <p className="text-[10px] font-bold text-gold-600 uppercase tracking-widest">Size: {item.selectedSize}</p>
+                  <p className="text-[10px] font-bold text-gold-600 uppercase tracking-widest">Variation: {item.selectedSize}</p>
                 )}
                 <p className="text-gold-600 font-medium text-sm sm:text-base">₹{item.price.toLocaleString()}</p>
                 
                 <div className="flex items-center justify-between sm:justify-start sm:space-x-8 pt-2">
                   <div className="flex items-center border border-gray-200 rounded-lg bg-white">
-                    <button onClick={() => updateQuantity(item.productId, item.quantity - 1, item.selectedSize)} className="p-1.5 sm:p-2 hover:bg-gray-50"><Minus size={14} /></button>
+                    <button onClick={() => updateQuantity(item.productId, item.quantity - 1, item.variationId)} className="p-1.5 sm:p-2 hover:bg-gray-50"><Minus size={14} /></button>
                     <span className="w-6 sm:w-8 text-center font-medium text-sm">{item.quantity}</span>
-                    <button onClick={() => updateQuantity(item.productId, item.quantity + 1, item.selectedSize)} className="p-1.5 sm:p-2 hover:bg-gray-50"><Plus size={14} /></button>
+                    <button onClick={() => updateQuantity(item.productId, item.quantity + 1, item.variationId)} className="p-1.5 sm:p-2 hover:bg-gray-50"><Plus size={14} /></button>
                   </div>
-                  <button onClick={() => removeFromCart(item.productId, item.selectedSize)} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
+                  <button onClick={() => removeFromCart(item.productId, item.variationId)} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
                     <Trash2 size={18} />
                   </button>
                 </div>
@@ -2030,7 +2174,7 @@ const Checkout = () => {
                 >
                   <div className="flex items-center space-x-3">
                     <div className={`p-2 rounded-lg ${paymentMethod === 'upi' ? 'bg-gold-200 text-gold-700' : 'bg-gray-100 text-gray-500'}`}>
-                      <LucideIcons.QrCode size={20} />
+                      <QrCode size={20} />
                     </div>
                     <div className="text-left">
                       <p className="text-sm font-bold">UPI / QR</p>
@@ -2068,7 +2212,7 @@ const Checkout = () => {
                   <img src={settings.upiQrCode} alt="UPI QR Code" className="w-48 h-48 mx-auto rounded-xl border-4 border-white shadow-sm" />
                 ) : (
                   <div className="w-48 h-48 mx-auto bg-gray-200 rounded-xl flex items-center justify-center text-gray-400">
-                    <LucideIcons.QrCode size={48} />
+                    <QrCode size={48} />
                   </div>
                 )}
                 {settings.upiId && (
@@ -2096,7 +2240,7 @@ const Checkout = () => {
                   >
                     {paymentScreenshot ? (
                       <div className="flex items-center space-x-2 text-green-600">
-                        <LucideIcons.CheckCircle size={20} />
+                        <CheckCircle size={20} />
                         <span className="text-sm font-medium">Screenshot Uploaded</span>
                       </div>
                     ) : (
@@ -3309,7 +3453,7 @@ const AdminProducts = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState({
     name: '', description: '', price: 0, originalPrice: 0, category: '', images: '', stock: 0, featured: false,
-    specs: '', labels: '', videoUrl: '', relatedProductIds: '', sizes: '', weight: 0
+    specs: '', labels: '', videoUrl: '', relatedProductIds: '', sizes: '', weight: 0, variations: ''
   });
 
   useEffect(() => {
@@ -3323,6 +3467,19 @@ const AdminProducts = () => {
   }, []);
 
   const [isUploading, setIsUploading] = useState(false);
+  const [deletingProductId, setDeletingProductId] = useState<string | null>(null);
+
+  const handleDeleteProduct = async () => {
+    if (!deletingProductId) return;
+    try {
+      await deleteDoc(doc(db, 'products', deletingProductId));
+      setProducts(products.filter(p => p.id !== deletingProductId));
+      toast.success("Product deleted");
+    } catch (error) {
+      toast.error("Delete failed");
+    }
+    setDeletingProductId(null);
+  };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -3352,6 +3509,18 @@ const AdminProducts = () => {
       labels: (formData.labels || '').split(',').map(s => s.trim()).filter(Boolean),
       relatedProductIds: (formData.relatedProductIds || '').split(',').map(s => s.trim()).filter(Boolean),
       sizes: (formData.sizes || '').split(',').map(s => s.trim()).filter(Boolean),
+      variations: (formData.variations || '').split('\n').map(line => {
+        const parts = line.split(',').map(s => s.trim());
+        if (parts.length < 2) return null;
+        const [name, type, price, stock] = parts;
+        return {
+          id: Math.random().toString(36).substr(2, 9),
+          name,
+          type: (type || 'size') as any,
+          price: price ? Number(price) : undefined,
+          stock: stock ? Number(stock) : 0
+        };
+      }).filter(Boolean),
       weight: Number(formData.weight || 0),
       specs: (formData.specs || '').split('\n').reduce((acc: any, line) => {
         const [key, ...val] = line.split(':');
@@ -3387,7 +3556,7 @@ const AdminProducts = () => {
           onClick={() => {
             setEditingProduct(null);
             setFormData({
-              name: '', description: '', price: 0, originalPrice: 0, category: '', images: '', stock: 0, featured: false, specs: '', labels: '', videoUrl: '', relatedProductIds: '', sizes: '', weight: 0
+              name: '', description: '', price: 0, originalPrice: 0, category: '', images: '', stock: 0, featured: false, specs: '', labels: '', videoUrl: '', relatedProductIds: '', sizes: '', weight: 0, variations: ''
             });
             setIsModalOpen(true);
           }}
@@ -3457,6 +3626,7 @@ const AdminProducts = () => {
                           videoUrl: product.videoUrl || '',
                           relatedProductIds: (product.relatedProductIds || []).join(', '),
                           sizes: (product.sizes || []).join(', '),
+                          variations: product.variations ? product.variations.map(v => `${v.name}, ${v.type}, ${v.price || ''}, ${v.stock}`).join('\n') : '',
                           weight: product.weight || 0,
                           specs: product.specs ? Object.entries(product.specs).map(([k, v]) => `${k}: ${v}`).join('\n') : '',
                           labels: (product.labels || []).join(', ')
@@ -3468,13 +3638,7 @@ const AdminProducts = () => {
                       <Settings size={18} />
                     </button>
                     <button
-                      onClick={async () => {
-                        if (confirm("Delete this product?")) {
-                          await deleteDoc(doc(db, 'products', product.id));
-                          setProducts(products.filter(p => p.id !== product.id));
-                          toast.success("Product deleted");
-                        }
-                      }}
+                      onClick={() => setDeletingProductId(product.id)}
                       className="p-2 text-gray-400 hover:text-red-500 transition-colors"
                     >
                       <Trash2 size={18} />
@@ -3486,6 +3650,14 @@ const AdminProducts = () => {
           </tbody>
         </table>
       </div>
+
+      <ConfirmModal 
+        isOpen={!!deletingProductId}
+        onClose={() => setDeletingProductId(null)}
+        onConfirm={handleDeleteProduct}
+        title="Delete Product?"
+        message="Are you sure you want to delete this product? This action cannot be undone."
+      />
 
       {/* Modal */}
       <AnimatePresence>
@@ -3587,6 +3759,11 @@ const AdminProducts = () => {
                     <input type="text" value={formData.sizes || ''} onChange={e => setFormData({ ...formData, sizes: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200" placeholder="6, 7, 8, 9" />
                   </div>
                   <div className="space-y-2 col-span-2">
+                    <label className="text-sm font-medium">Product Variations (One per line, format: Name, Type, Price, Stock)</label>
+                    <textarea rows={4} value={formData.variations || ''} onChange={e => setFormData({ ...formData, variations: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200 font-mono text-sm" placeholder="Small, size, 500, 10&#10;Red, color, 600, 5" />
+                    <p className="text-[10px] text-gray-400">Type can be: size, color, material, other. Price is optional (uses base price if empty).</p>
+                  </div>
+                  <div className="space-y-2 col-span-2">
                     <label className="text-sm font-medium">Product Labels (comma separated, e.g. New, Best Seller)</label>
                     <input type="text" value={formData.labels || ''} onChange={e => setFormData({ ...formData, labels: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200" placeholder="New, Sale, Limited Edition" />
                   </div>
@@ -3645,8 +3822,10 @@ const AdminProducts = () => {
 const AdminCategories = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [formData, setFormData] = useState({ name: '', description: '', image: '' });
   const [isUploading, setIsUploading] = useState(false);
+  const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -3675,22 +3854,47 @@ const AdminCategories = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await addDoc(collection(db, 'categories'), formData);
-      toast.success("Category added!");
+      if (editingCategory) {
+        await updateDoc(doc(db, 'categories', editingCategory.id), formData);
+        toast.success("Category updated!");
+      } else {
+        await addDoc(collection(db, 'categories'), formData);
+        toast.success("Category added!");
+      }
       setIsModalOpen(false);
+      setEditingCategory(null);
       setFormData({ name: '', description: '', image: '' });
       const snap = await getDocs(collection(db, 'categories'));
       setCategories(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category)));
     } catch (error) {
-      toast.error("Failed to add category");
+      toast.error(editingCategory ? "Failed to update category" : "Failed to add category");
     }
+  };
+
+  const handleDeleteCategory = async () => {
+    if (!deletingCategoryId) return;
+    try {
+      await deleteDoc(doc(db, 'categories', deletingCategoryId));
+      setCategories(categories.filter(c => c.id !== deletingCategoryId));
+      toast.success("Category deleted");
+    } catch (error) {
+      toast.error("Failed to delete category");
+    }
+    setDeletingCategoryId(null);
   };
 
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-serif font-bold">Manage Categories</h1>
-        <button onClick={() => setIsModalOpen(true)} className="bg-gray-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-gold-600 transition-all flex items-center space-x-2">
+        <button 
+          onClick={() => {
+            setEditingCategory(null);
+            setFormData({ name: '', description: '', image: '' });
+            setIsModalOpen(true);
+          }} 
+          className="bg-gray-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-gold-600 transition-all flex items-center space-x-2"
+        >
           <Plus size={20} />
           <span>Add Category</span>
         </button>
@@ -3705,29 +3909,50 @@ const AdminCategories = () => {
                 <h3 className="text-sm font-bold truncate">{cat.name}</h3>
                 <p className="text-[10px] text-gray-500 line-clamp-1">{cat.description}</p>
               </div>
-              <button
-                onClick={async () => {
-                  if (confirm("Delete category?")) {
-                    await deleteDoc(doc(db, 'categories', cat.id));
-                    setCategories(categories.filter(c => c.id !== cat.id));
-                    toast.success("Category deleted");
-                  }
-                }}
-                className="text-gray-400 hover:text-red-500"
-              >
-                <Trash2 size={18} />
-              </button>
+              <div className="flex items-center space-x-1">
+                <button
+                  onClick={() => {
+                    setEditingCategory(cat);
+                    setFormData({ name: cat.name, description: cat.description || '', image: cat.image || '' });
+                    setIsModalOpen(true);
+                  }}
+                  className="p-1.5 text-gray-400 hover:text-gold-600 transition-colors"
+                  title="Edit Category"
+                >
+                  <Edit2 size={14} />
+                </button>
+                <button
+                  onClick={() => setDeletingCategoryId(cat.id)}
+                  className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
+                  title="Delete Category"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             </div>
           </div>
         ))}
       </div>
+
+      <ConfirmModal 
+        isOpen={!!deletingCategoryId}
+        onClose={() => setDeletingCategoryId(null)}
+        onConfirm={handleDeleteCategory}
+        title="Delete Category?"
+        message="Are you sure you want to delete this category? This action cannot be undone."
+      />
 
       <AnimatePresence>
         {isModalOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsModalOpen(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
             <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="relative bg-white w-full max-w-md rounded-3xl shadow-2xl p-8 space-y-6">
-              <h2 className="text-2xl font-serif font-bold">Add Category</h2>
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-serif font-bold">{editingCategory ? 'Edit Category' : 'Add Category'}</h2>
+                <button onClick={() => { setIsModalOpen(false); setEditingCategory(null); }} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                  <X size={20} />
+                </button>
+              </div>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Category Name</label>
@@ -3747,7 +3972,9 @@ const AdminCategories = () => {
                     </label>
                   </div>
                 </div>
-                <button type="submit" className="w-full bg-gray-900 text-white py-4 rounded-xl font-bold hover:bg-gold-600 transition-all">Add Category</button>
+                <button type="submit" className="w-full bg-gray-900 text-white py-4 rounded-xl font-bold hover:bg-gold-600 transition-all">
+                  {editingCategory ? 'Update Category' : 'Add Category'}
+                </button>
               </form>
             </motion.div>
           </div>
@@ -3760,6 +3987,7 @@ const AdminCategories = () => {
 const AdminAbandonedCarts = () => {
   const [carts, setCarts] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingCartId, setDeletingCartId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCarts = async () => {
@@ -3775,6 +4003,18 @@ const AdminAbandonedCarts = () => {
     const message = `Hello ${cart.customerName}! We noticed you left some beautiful jewelry in your bag at Prahvi Jewelry. Would you like to complete your purchase?\n\nItems: ${cart.items.map(i => i.name).join(', ')}\n\nShop here: ${window.location.origin}/shop`;
     const url = `https://wa.me/${cart.customerPhone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
+  };
+
+  const handleDeleteCart = async () => {
+    if (!deletingCartId) return;
+    try {
+      await deleteDoc(doc(db, 'orders', deletingCartId));
+      setCarts(carts.filter(c => c.id !== deletingCartId));
+      toast.success("Deleted");
+    } catch (error) {
+      toast.error("Failed to delete");
+    }
+    setDeletingCartId(null);
   };
 
   if (loading) return <div className="pt-20 text-center font-serif text-xl">Loading abandoned bags...</div>;
@@ -3810,13 +4050,21 @@ const AdminAbandonedCarts = () => {
                   {cart.createdAt ? new Date(cart.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}
                 </td>
                 <td className="px-6 py-4">
-                  <button
-                    onClick={() => sendReminder(cart)}
-                    className="flex items-center space-x-2 text-xs font-bold text-green-600 hover:text-green-700 bg-green-50 px-4 py-2 rounded-full transition-all"
-                  >
-                    <Phone size={14} />
-                    <span>Send Reminder</span>
-                  </button>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => sendReminder(cart)}
+                      className="flex items-center space-x-2 text-xs font-bold text-green-600 hover:text-green-700 bg-green-50 px-4 py-2 rounded-full transition-all"
+                    >
+                      <Phone size={14} />
+                      <span>Send Reminder</span>
+                    </button>
+                    <button
+                      onClick={() => setDeletingCartId(cart.id)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-all"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -3828,6 +4076,14 @@ const AdminAbandonedCarts = () => {
           </tbody>
         </table>
       </div>
+
+      <ConfirmModal 
+        isOpen={!!deletingCartId}
+        onClose={() => setDeletingCartId(null)}
+        onConfirm={handleDeleteCart}
+        title="Delete Abandoned Bag?"
+        message="Are you sure you want to delete this abandoned bag record?"
+      />
     </div>
   );
 };
@@ -3835,6 +4091,8 @@ const AdminAbandonedCarts = () => {
 const AdminOrders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isClearModalOpen, setIsClearModalOpen] = useState(false);
+  const [deletingOrderId, setDeletingOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -3882,6 +4140,31 @@ const AdminOrders = () => {
     window.open(url, '_blank');
   };
 
+  const handleDeleteOrder = async () => {
+    if (!deletingOrderId) return;
+    try {
+      await deleteDoc(doc(db, 'orders', deletingOrderId));
+      setOrders(orders.filter(o => o.id !== deletingOrderId));
+      toast.success("Order deleted");
+    } catch (error) {
+      toast.error("Delete failed");
+    }
+    setDeletingOrderId(null);
+  };
+
+  const handleClearAllOrders = async () => {
+    try {
+      const snap = await getDocs(collection(db, 'orders'));
+      const deletePromises = snap.docs.map(doc => deleteDoc(doc.ref));
+      await Promise.all(deletePromises);
+      setOrders([]);
+      toast.success("All orders cleared!");
+    } catch (error) {
+      toast.error("Failed to clear orders");
+    }
+    setIsClearModalOpen(false);
+  };
+
   const exportToCSV = () => {
     const headers = ['Order ID', 'Date', 'Customer Name', 'Phone', 'Email', 'Total', 'Status', 'Payment Method', 'Address'];
     const rows = orders.map(o => [
@@ -3912,14 +4195,47 @@ const AdminOrders = () => {
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-serif font-bold">Manage Orders</h1>
-        <button
-          onClick={exportToCSV}
-          className="flex items-center space-x-2 px-6 py-3 bg-gold-600 text-white rounded-xl font-bold hover:bg-gold-500 transition-all shadow-lg shadow-gold-600/20"
-        >
-          <LucideIcons.Download size={18} />
-          <span>Export CSV</span>
-        </button>
+        <div className="flex items-center space-x-4">
+          <button
+            onClick={exportToCSV}
+            className="flex items-center space-x-2 px-6 py-3 bg-gold-600 text-white rounded-xl font-bold hover:bg-gold-500 transition-all shadow-lg shadow-gold-600/20"
+          >
+            <Download size={18} />
+            <span>Export CSV</span>
+          </button>
+          <button
+            onClick={() => setIsClearModalOpen(true)}
+            className="flex items-center space-x-2 px-6 py-3 bg-red-50 text-red-600 rounded-xl font-bold hover:bg-red-100 transition-all"
+          >
+            <Trash2 size={18} />
+            <span>Clear All</span>
+          </button>
+        </div>
       </div>
+
+      <ConfirmModal 
+        isOpen={isClearModalOpen}
+        onClose={() => setIsClearModalOpen(false)}
+        onConfirm={handleClearAllOrders}
+        title="Delete ALL Orders?"
+        message="CRITICAL: This will permanently delete every order in your database. This action is irreversible. Are you absolutely sure?"
+      />
+
+      <ConfirmModal 
+        isOpen={isClearModalOpen}
+        onClose={() => setIsClearModalOpen(false)}
+        onConfirm={handleClearAllOrders}
+        title="Delete ALL Orders?"
+        message="CRITICAL: This will permanently delete every order in your database. This action is irreversible. Are you absolutely sure?"
+      />
+
+      <ConfirmModal 
+        isOpen={!!deletingOrderId}
+        onClose={() => setDeletingOrderId(null)}
+        onConfirm={handleDeleteOrder}
+        title="Delete Order?"
+        message="Are you sure you want to delete this order? This action cannot be undone."
+      />
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <table className="w-full text-left">
           <thead className="bg-gray-50 border-b border-gray-100">
@@ -3938,6 +4254,15 @@ const AdminOrders = () => {
                 <td className="px-6 py-4">
                   <div className="text-sm font-medium text-gray-900">{order.customerName}</div>
                   <div className="text-xs text-gray-500">{order.customerPhone}</div>
+                  <div className="mt-2 space-y-1">
+                    {order.items.map((item, i) => (
+                      <div key={i} className="text-[10px] text-gray-500 flex items-center space-x-1">
+                        <span className="font-medium">{item.quantity}x</span>
+                        <span className="truncate max-w-[150px]">{item.name}</span>
+                        {item.selectedSize && <span className="text-gold-600 font-bold">({item.selectedSize})</span>}
+                      </div>
+                    ))}
+                  </div>
                   {order.trackingNumber && (
                     <div className="mt-1 flex items-center space-x-2">
                       <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-mono">
@@ -3992,6 +4317,13 @@ const AdminOrders = () => {
                       title="Edit Tracking Info"
                     >
                       <Truck size={14} />
+                    </button>
+                    <button
+                      onClick={() => setDeletingOrderId(order.id)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-all"
+                      title="Delete Order"
+                    >
+                      <Trash2 size={14} />
                     </button>
                   </div>
                 </td>
@@ -4186,7 +4518,7 @@ const AdminMessages = () => {
                   <p className="text-sm text-gold-600">{msg.email}</p>
                   <span className="text-gray-300">|</span>
                   <p className="text-sm text-gold-600 flex items-center space-x-1">
-                    <LucideIcons.Phone size={14} />
+                    <Phone size={14} />
                     <span>{msg.phone}</span>
                   </p>
                 </div>
@@ -4208,6 +4540,7 @@ const AdminMessages = () => {
 };
 
 const Wishlist = () => {
+  const navigate = useNavigate();
   const { wishlist, toggleWishlist } = useWishlist();
   const { addToCart } = useCart();
   const [products, setProducts] = useState<Product[]>([]);
@@ -4252,13 +4585,17 @@ const Wishlist = () => {
                 <ProductCard product={product} />
                 <button
                   onClick={() => {
-                    addToCart(product, 1);
-                    toggleWishlist(product.id);
+                    if (product.variations && product.variations.length > 0) {
+                      navigate(`/product/${product.id}`);
+                    } else {
+                      addToCart(product, 1);
+                      toggleWishlist(product.id);
+                    }
                   }}
                   className="w-full py-3 bg-gray-900 text-white rounded-xl font-bold text-sm hover:bg-gold-600 transition-all flex items-center justify-center space-x-2"
                 >
                   <ShoppingBag size={16} />
-                  <span>Move to Bag</span>
+                  <span>{product.variations && product.variations.length > 0 ? 'View Options' : 'Move to Bag'}</span>
                 </button>
               </div>
             ))}
