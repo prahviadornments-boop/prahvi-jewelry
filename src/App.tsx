@@ -1596,7 +1596,7 @@ const ProductDetail = () => {
     };
 
 const Cart = () => {
-  const { cart, removeFromCart, updateQuantity, total } = useCart();
+  const { cart, removeFromCart, updateQuantity, total, clearCart } = useCart();
   const { settings } = useSettings();
   const navigate = useNavigate();
 
@@ -1649,7 +1649,20 @@ const Cart = () => {
 
   return (
     <div className="pt-24 sm:pt-32 pb-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <h1 className="text-2xl sm:text-4xl font-serif font-bold mb-8 sm:mb-12">Shopping Bag</h1>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 sm:mb-12">
+        <h1 className="text-2xl sm:text-4xl font-serif font-bold">Shopping Bag</h1>
+        <button
+          onClick={() => {
+            if (confirm("Clear your shopping bag?")) {
+              clearCart();
+            }
+          }}
+          className="text-sm font-bold text-red-500 hover:text-red-600 flex items-center space-x-2 px-4 py-2 bg-red-50 rounded-full transition-all"
+        >
+          <Trash2 size={16} />
+          <span>Clear Bag</span>
+        </button>
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 sm:gap-16">
         <div className="lg:col-span-2 space-y-4 sm:space-y-8">
           {cart.map(item => (
@@ -3709,6 +3722,7 @@ const AdminProducts = () => {
 const AdminCategories = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [formData, setFormData] = useState({ name: '', description: '', image: '' });
   const [isUploading, setIsUploading] = useState(false);
 
@@ -3739,14 +3753,20 @@ const AdminCategories = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await addDoc(collection(db, 'categories'), formData);
-      toast.success("Category added!");
+      if (editingCategory) {
+        await updateDoc(doc(db, 'categories', editingCategory.id), formData);
+        toast.success("Category updated!");
+      } else {
+        await addDoc(collection(db, 'categories'), formData);
+        toast.success("Category added!");
+      }
       setIsModalOpen(false);
+      setEditingCategory(null);
       setFormData({ name: '', description: '', image: '' });
       const snap = await getDocs(collection(db, 'categories'));
       setCategories(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category)));
     } catch (error) {
-      toast.error("Failed to add category");
+      toast.error(editingCategory ? "Failed to update category" : "Failed to add category");
     }
   };
 
@@ -3754,7 +3774,14 @@ const AdminCategories = () => {
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-serif font-bold">Manage Categories</h1>
-        <button onClick={() => setIsModalOpen(true)} className="bg-gray-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-gold-600 transition-all flex items-center space-x-2">
+        <button 
+          onClick={() => {
+            setEditingCategory(null);
+            setFormData({ name: '', description: '', image: '' });
+            setIsModalOpen(true);
+          }} 
+          className="bg-gray-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-gold-600 transition-all flex items-center space-x-2"
+        >
           <Plus size={20} />
           <span>Add Category</span>
         </button>
@@ -3769,18 +3796,32 @@ const AdminCategories = () => {
                 <h3 className="text-sm font-bold truncate">{cat.name}</h3>
                 <p className="text-[10px] text-gray-500 line-clamp-1">{cat.description}</p>
               </div>
-              <button
-                onClick={async () => {
-                  if (confirm("Delete category?")) {
-                    await deleteDoc(doc(db, 'categories', cat.id));
-                    setCategories(categories.filter(c => c.id !== cat.id));
-                    toast.success("Category deleted");
-                  }
-                }}
-                className="text-gray-400 hover:text-red-500"
-              >
-                <Trash2 size={18} />
-              </button>
+              <div className="flex items-center space-x-1">
+                <button
+                  onClick={() => {
+                    setEditingCategory(cat);
+                    setFormData({ name: cat.name, description: cat.description || '', image: cat.image || '' });
+                    setIsModalOpen(true);
+                  }}
+                  className="p-1.5 text-gray-400 hover:text-gold-600 transition-colors"
+                  title="Edit Category"
+                >
+                  <LucideIcons.Edit2 size={14} />
+                </button>
+                <button
+                  onClick={async () => {
+                    if (confirm("Delete category?")) {
+                      await deleteDoc(doc(db, 'categories', cat.id));
+                      setCategories(categories.filter(c => c.id !== cat.id));
+                      toast.success("Category deleted");
+                    }
+                  }}
+                  className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
+                  title="Delete Category"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             </div>
           </div>
         ))}
@@ -3791,7 +3832,12 @@ const AdminCategories = () => {
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsModalOpen(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
             <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="relative bg-white w-full max-w-md rounded-3xl shadow-2xl p-8 space-y-6">
-              <h2 className="text-2xl font-serif font-bold">Add Category</h2>
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-serif font-bold">{editingCategory ? 'Edit Category' : 'Add Category'}</h2>
+                <button onClick={() => { setIsModalOpen(false); setEditingCategory(null); }} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                  <X size={20} />
+                </button>
+              </div>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Category Name</label>
@@ -3811,7 +3857,9 @@ const AdminCategories = () => {
                     </label>
                   </div>
                 </div>
-                <button type="submit" className="w-full bg-gray-900 text-white py-4 rounded-xl font-bold hover:bg-gold-600 transition-all">Add Category</button>
+                <button type="submit" className="w-full bg-gray-900 text-white py-4 rounded-xl font-bold hover:bg-gold-600 transition-all">
+                  {editingCategory ? 'Update Category' : 'Add Category'}
+                </button>
               </form>
             </motion.div>
           </div>
@@ -4024,7 +4072,7 @@ const AdminOrders = () => {
             onClick={clearAllOrders}
             className="flex items-center space-x-2 px-6 py-3 bg-red-50 text-red-600 rounded-xl font-bold hover:bg-red-100 transition-all"
           >
-            <LucideIcons.Trash2 size={18} />
+            <Trash2 size={18} />
             <span>Clear All</span>
           </button>
           <button
