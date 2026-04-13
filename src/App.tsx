@@ -974,6 +974,8 @@ const ProductDetail = () => {
   const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
   const [submittingReview, setSubmittingReview] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string>('');
+  const [showSizeConfirm, setShowSizeConfirm] = useState(false);
+  const [isBuyNowPending, setIsBuyNowPending] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -1159,6 +1161,59 @@ const ProductDetail = () => {
         )}
       </AnimatePresence>
 
+      {/* Size Confirmation Modal */}
+      <AnimatePresence>
+        {showSizeConfirm && (
+          <div className="fixed inset-0 z-[300] flex items-center justify-center px-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowSizeConfirm(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="relative bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center space-y-6"
+            >
+              <div className="w-16 h-16 bg-gold-50 text-gold-600 rounded-full flex items-center justify-center mx-auto">
+                <LucideIcons.Info size={32} />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-serif font-bold">No Size Selected</h3>
+                <p className="text-gray-500 text-sm">You haven't selected a size. Would you like to continue with the default size or no specific size?</p>
+              </div>
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => {
+                    addToCart(product, detailQuantity, '');
+                    setShowSizeConfirm(false);
+                    if (isBuyNowPending) {
+                      navigate('/checkout');
+                      setIsBuyNowPending(false);
+                    }
+                  }}
+                  className="w-full py-3 bg-gray-900 text-white rounded-xl font-bold hover:bg-gold-600 transition-all"
+                >
+                  Continue Anyway
+                </button>
+                <button
+                  onClick={() => {
+                    setShowSizeConfirm(false);
+                    setIsBuyNowPending(false);
+                  }}
+                  className="w-full py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition-all"
+                >
+                  Select a Size
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       <div className="flex items-center space-x-2 text-[10px] sm:text-xs text-gray-400 mb-8 uppercase tracking-widest">
         <Link to="/" className="hover:text-gray-900 transition-colors">Home</Link>
         <ChevronRight size={10} />
@@ -1259,7 +1314,8 @@ const ProductDetail = () => {
               <button
                 onClick={() => {
                   if (product.sizes && product.sizes.length > 0 && !selectedSize) {
-                    toast.error("Please select a size");
+                    setIsBuyNowPending(false);
+                    setShowSizeConfirm(true);
                     return;
                   }
                   if (product.stock > 0) addToCart(product, detailQuantity, selectedSize);
@@ -1279,7 +1335,8 @@ const ProductDetail = () => {
               <button 
                 onClick={() => {
                   if (product.sizes && product.sizes.length > 0 && !selectedSize) {
-                    toast.error("Please select a size");
+                    setIsBuyNowPending(true);
+                    setShowSizeConfirm(true);
                     return;
                   }
                   addToCart(product, detailQuantity, selectedSize);
