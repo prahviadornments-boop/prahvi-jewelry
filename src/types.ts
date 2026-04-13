@@ -1,3 +1,12 @@
+export interface Variation {
+  id: string;
+  name: string; // e.g., "Small", "Red", "Gold"
+  type: 'size' | 'color' | 'material' | 'other';
+  price?: number; // Override base price if set
+  stock: number; // Stock for this specific variation
+  image?: string; // Optional image for this variation
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -13,6 +22,9 @@ export interface Product {
   labels?: string[];
   videoUrl?: string;
   relatedProductIds?: string[];
+  sizes?: string[]; // Deprecated, use variations
+  variations?: Variation[];
+  weight?: number; // in kg
 }
 
 export interface Category {
@@ -29,6 +41,9 @@ export interface OrderItem {
   quantity: number;
   image: string;
   stock: number;
+  selectedSize?: string;
+  variationId?: string;
+  weight?: number; // in kg
 }
 
 export interface Order {
@@ -152,4 +167,5 @@ export interface StoreSettings {
     description: string;
     images: { url: string; link?: string }[];
   };
+  categoryVisibility?: { [key: string]: boolean };
 }
