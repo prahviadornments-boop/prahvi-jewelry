@@ -31,13 +31,14 @@ async function startServer() {
   });
 
   app.post("/api/calculate-shipping", (req, res) => {
-    const { fromPincode, toPincode, weight, couriers } = req.body;
+    const { toPincode, weight, couriers } = req.body;
+    const cleanPincode = String(toPincode || "").trim();
     
-    if (!toPincode || weight === undefined) {
+    if (!cleanPincode || weight === undefined) {
       return res.status(400).json({ error: "Missing required fields: toPincode, weight" });
     }
 
-    const zone = shippingConfig.pincodes[toPincode] || "remote";
+    const zone = shippingConfig.pincodes[cleanPincode] || "remote";
     const selectedCouriers = couriers || Object.keys(shippingConfig.couriers);
     
     const rates: any = {};
@@ -63,9 +64,9 @@ async function startServer() {
       };
     });
 
+    console.log(`Shipping calculation for ${cleanPincode} (Zone: ${zone}, Weight: ${weight}kg)`);
     res.json({
-      fromPincode,
-      toPincode,
+      toPincode: cleanPincode,
       weight,
       zone,
       rates,
