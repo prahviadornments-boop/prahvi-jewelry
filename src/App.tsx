@@ -248,6 +248,7 @@ const Navbar = () => {
   const navLinks = [
     { name: 'Home', path: '/' },
     { name: 'Shop', path: '/shop' },
+    { name: 'Our Story', path: '/about' },
     { name: 'Contact', path: '/contact' },
   ];
 
@@ -454,10 +455,10 @@ const Footer = () => {
                 ))
               ) : (
                 <>
+                  <li><Link to="/about" className="hover:text-white transition-colors">Our Story</Link></li>
                   <li><Link to="/shop" className="hover:text-white transition-colors">Shop All</Link></li>
                   <li><Link to="/shop?category=rings" className="hover:text-white transition-colors">Rings</Link></li>
                   <li><Link to="/shop?category=necklaces" className="hover:text-white transition-colors">Necklaces</Link></li>
-                  <li><Link to="/shop?category=earrings" className="hover:text-white transition-colors">Earrings</Link></li>
                 </>
               )}
             </ul>
@@ -543,7 +544,7 @@ const InstagramGallery = ({ settings }: { settings: StoreSettings }) => {
 };
 
 const Home = () => {
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const { settings } = useSettings();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -551,10 +552,10 @@ const Home = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const pQuery = query(collection(db, 'products'), where('featured', '==', true), limit(4));
+        const pQuery = query(collection(db, 'products'), limit(20));
         const pSnapshot = await getDocs(pQuery);
         const pData = pSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
-        setFeaturedProducts(pData);
+        setProducts(pData);
 
         const cSnapshot = await getDocs(collection(db, 'categories'));
         const cData = cSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category));
@@ -659,7 +660,9 @@ const Home = () => {
             </div>
             <span className="text-[10px] font-bold text-gray-900 uppercase tracking-widest group-hover:text-gold-600 transition-colors">All</span>
           </Link>
-          {categories.map((cat) => {
+          {categories
+            .filter(cat => settings?.categoryVisibility?.[cat.id] !== false)
+            .map((cat) => {
             const getIcon = (name: string) => {
               const n = name.toLowerCase();
               if (n.includes('gold')) return <Coins size={24} className="text-gold-600" />;
@@ -695,13 +698,13 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Featured Products */}
+      {/* All Products Section */}
       <section className="bg-gold-50/50 py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           <div className="flex justify-between items-end">
             <div className="space-y-4">
-              <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900">{settings?.featuredSection?.title || "Featured Pieces"}</h2>
-              <p className="text-gray-500">{settings?.featuredSection?.description || "Our most coveted designs, handpicked for their exceptional craftsmanship."}</p>
+              <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-900">Our Collection</h2>
+              <p className="text-gray-500">Explore our full range of exquisite jewelry pieces.</p>
             </div>
             <Link to="/shop" className="hidden md:flex items-center space-x-2 text-gold-600 font-semibold hover:text-gold-700 transition-colors">
               <span>View All Products</span>
@@ -710,8 +713,8 @@ const Home = () => {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
-            {featuredProducts.length > 0 ? (
-              featuredProducts.map(product => (
+            {products.length > 0 ? (
+              products.map(product => (
                 <ProductCard key={product.id} product={product} />
               ))
             ) : (
@@ -835,6 +838,7 @@ const Shop = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [searchParams, setSearchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
+  const { settings } = useSettings();
   
   const selectedCategory = searchParams.get('category') || 'all';
   const searchQuery = searchParams.get('search') || '';
@@ -901,7 +905,9 @@ const Shop = () => {
             >
               All
             </button>
-            {categories.map(cat => (
+            {categories
+              .filter(cat => settings?.categoryVisibility?.[cat.id] !== false)
+              .map(cat => (
               <button
                 key={cat.id}
                 onClick={() => setSearchParams({ category: cat.id, sort: sortBy, search: searchQuery })}
@@ -967,6 +973,7 @@ const ProductDetail = () => {
   const [completeTheLook, setCompleteTheLook] = useState<Product[]>([]);
   const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [selectedSize, setSelectedSize] = useState<string>('');
   const { user } = useAuth();
 
   useEffect(() => {
@@ -1250,7 +1257,13 @@ const ProductDetail = () => {
                 </button>
               </div>
               <button
-                onClick={() => product.stock > 0 && addToCart(product, detailQuantity)}
+                onClick={() => {
+                  if (product.sizes && product.sizes.length > 0 && !selectedSize) {
+                    toast.error("Please select a size");
+                    return;
+                  }
+                  if (product.stock > 0) addToCart(product, detailQuantity, selectedSize);
+                }}
                 disabled={product.stock === 0}
                 className={`flex-grow h-14 rounded-md font-bold uppercase tracking-widest transition-all border ${
                   product.stock > 0 
@@ -1265,7 +1278,11 @@ const ProductDetail = () => {
             {product.stock > 0 && (
               <button 
                 onClick={() => {
-                  addToCart(product, detailQuantity);
+                  if (product.sizes && product.sizes.length > 0 && !selectedSize) {
+                    toast.error("Please select a size");
+                    return;
+                  }
+                  addToCart(product, detailQuantity, selectedSize);
                   navigate('/checkout');
                 }}
                 className="w-full bg-black text-white h-14 rounded-md font-bold uppercase tracking-widest hover:bg-gray-800 transition-all shadow-lg"
@@ -1305,6 +1322,37 @@ const ProductDetail = () => {
           <div className="prose prose-gold max-w-none pt-8 border-t border-gray-100">
             <p className="text-gray-600 leading-relaxed text-lg">{product.description}</p>
           </div>
+
+          {/* Size Selection */}
+          {product.sizes && product.sizes.length > 0 && (
+            <div className="space-y-4 pt-8 border-t border-gray-100">
+              <div className="flex justify-between items-center">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Select Size</label>
+                <button 
+                  onClick={() => setIsSizeGuideOpen(true)}
+                  className="text-[10px] font-bold text-gold-600 hover:underline flex items-center space-x-1"
+                >
+                  <LucideIcons.Ruler size={12} />
+                  <span>Size Guide</span>
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {product.sizes.map(size => (
+                  <button
+                    key={size}
+                    onClick={() => setSelectedSize(size)}
+                    className={`px-4 py-2 rounded-lg border-2 text-sm font-bold transition-all ${
+                      selectedSize === size 
+                      ? 'border-gold-600 bg-gold-50 text-gold-600' 
+                      : 'border-gray-100 text-gray-600 hover:border-gray-200'
+                    }`}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Specifications */}
           {product.specs && Object.keys(product.specs).length > 0 && (
@@ -1471,21 +1519,24 @@ const Cart = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 sm:gap-16">
         <div className="lg:col-span-2 space-y-4 sm:space-y-8">
           {cart.map(item => (
-            <div key={item.productId} className="flex items-start sm:items-center space-x-4 sm:space-x-6 py-4 sm:py-6 border-b border-gray-100">
+            <div key={`${item.productId}-${item.selectedSize || 'no-size'}`} className="flex items-start sm:items-center space-x-4 sm:space-x-6 py-4 sm:py-6 border-b border-gray-100">
               <div className="w-20 h-28 sm:w-24 sm:h-32 rounded-xl overflow-hidden bg-gray-50 shrink-0">
                 <img src={item.image} alt={item.name} className="w-full h-full object-contain" referrerPolicy="no-referrer" />
               </div>
               <div className="flex-grow space-y-1 min-w-0">
                 <h3 className="text-base sm:text-lg font-serif font-bold truncate">{item.name}</h3>
+                {item.selectedSize && (
+                  <p className="text-[10px] font-bold text-gold-600 uppercase tracking-widest">Size: {item.selectedSize}</p>
+                )}
                 <p className="text-gold-600 font-medium text-sm sm:text-base">₹{item.price.toLocaleString()}</p>
                 
                 <div className="flex items-center justify-between sm:justify-start sm:space-x-8 pt-2">
                   <div className="flex items-center border border-gray-200 rounded-lg bg-white">
-                    <button onClick={() => updateQuantity(item.productId, item.quantity - 1)} className="p-1.5 sm:p-2 hover:bg-gray-50"><Minus size={14} /></button>
+                    <button onClick={() => updateQuantity(item.productId, item.quantity - 1, item.selectedSize)} className="p-1.5 sm:p-2 hover:bg-gray-50"><Minus size={14} /></button>
                     <span className="w-6 sm:w-8 text-center font-medium text-sm">{item.quantity}</span>
-                    <button onClick={() => updateQuantity(item.productId, item.quantity + 1)} className="p-1.5 sm:p-2 hover:bg-gray-50"><Plus size={14} /></button>
+                    <button onClick={() => updateQuantity(item.productId, item.quantity + 1, item.selectedSize)} className="p-1.5 sm:p-2 hover:bg-gray-50"><Plus size={14} /></button>
                   </div>
-                  <button onClick={() => removeFromCart(item.productId)} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
+                  <button onClick={() => removeFromCart(item.productId, item.selectedSize)} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
                     <Trash2 size={18} />
                   </button>
                 </div>
@@ -2158,6 +2209,15 @@ const Profile = () => {
 const AdminSettings = () => {
   const { settings, updateSettings, loading } = useSettings();
   const [formData, setFormData] = useState<StoreSettings>(settings);
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const snap = await getDocs(collection(db, 'categories'));
+      setCategories(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category)));
+    };
+    fetchCategories();
+  }, []);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, section: 'hero' | 'about' | 'upiQrCode') => {
     const file = e.target.files?.[0];
@@ -2357,6 +2417,28 @@ const AdminSettings = () => {
                 </div>
               </div>
             )}
+
+            <div className="pt-6 border-t border-gray-100 space-y-4">
+              <h4 className="font-bold">Category Visibility</h4>
+              <p className="text-xs text-gray-500">Control which categories are visible on the website.</p>
+              <div className="grid grid-cols-2 gap-4">
+                {categories.map(cat => (
+                  <label key={cat.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-all">
+                    <input
+                      type="checkbox"
+                      checked={formData.categoryVisibility?.[cat.id] !== false}
+                      onChange={e => {
+                        const newVisibility = { ...(formData.categoryVisibility || {}) };
+                        newVisibility[cat.id] = e.target.checked;
+                        setFormData({ ...formData, categoryVisibility: newVisibility });
+                      }}
+                      className="w-5 h-5 rounded text-gold-600 focus:ring-gold-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700">{cat.name}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
 
             <button type="submit" className="w-full bg-gray-900 text-white py-3 rounded-xl font-bold hover:bg-gold-600 transition-all">
               Save Settings
@@ -3036,7 +3118,7 @@ const AdminProducts = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState({
     name: '', description: '', price: 0, originalPrice: 0, category: '', images: '', stock: 0, featured: false,
-    specs: '', labels: '', videoUrl: '', relatedProductIds: ''
+    specs: '', labels: '', videoUrl: '', relatedProductIds: '', sizes: ''
   });
 
   useEffect(() => {
@@ -3078,6 +3160,7 @@ const AdminProducts = () => {
       images: (formData.images || '').split(',').map(s => s.trim()).filter(Boolean),
       labels: (formData.labels || '').split(',').map(s => s.trim()).filter(Boolean),
       relatedProductIds: (formData.relatedProductIds || '').split(',').map(s => s.trim()).filter(Boolean),
+      sizes: (formData.sizes || '').split(',').map(s => s.trim()).filter(Boolean),
       specs: (formData.specs || '').split('\n').reduce((acc: any, line) => {
         const [key, ...val] = line.split(':');
         if (key && val.length > 0) acc[key.trim()] = val.join(':').trim();
@@ -3111,7 +3194,9 @@ const AdminProducts = () => {
         <button
           onClick={() => {
             setEditingProduct(null);
-            setFormData({ name: '', description: '', price: 0, originalPrice: 0, category: '', images: '', stock: 0, featured: false, specs: '', labels: '', videoUrl: '', relatedProductIds: '' });
+            setFormData({
+              name: '', description: '', price: 0, originalPrice: 0, category: '', images: '', stock: 0, featured: false, specs: '', labels: '', videoUrl: '', relatedProductIds: '', sizes: ''
+            });
             setIsModalOpen(true);
           }}
           className="bg-gray-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-gold-600 transition-all flex items-center space-x-2"
@@ -3179,6 +3264,7 @@ const AdminProducts = () => {
                           featured: product.featured || false,
                           videoUrl: product.videoUrl || '',
                           relatedProductIds: (product.relatedProductIds || []).join(', '),
+                          sizes: (product.sizes || []).join(', '),
                           specs: product.specs ? Object.entries(product.specs).map(([k, v]) => `${k}: ${v}`).join('\n') : '',
                           labels: (product.labels || []).join(', ')
                         });
@@ -3298,6 +3384,10 @@ const AdminProducts = () => {
                   <div className="space-y-2 col-span-2">
                     <label className="text-sm font-medium">Related Product IDs (comma separated)</label>
                     <input type="text" value={formData.relatedProductIds || ''} onChange={e => setFormData({ ...formData, relatedProductIds: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200" placeholder="ID1, ID2, ID3" />
+                  </div>
+                  <div className="space-y-2 col-span-2">
+                    <label className="text-sm font-medium">Available Sizes (comma separated, e.g. 6, 7, 8 or 2.4, 2.6)</label>
+                    <input type="text" value={formData.sizes || ''} onChange={e => setFormData({ ...formData, sizes: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200" placeholder="6, 7, 8, 9" />
                   </div>
                   <div className="space-y-2 col-span-2">
                     <label className="text-sm font-medium">Product Labels (comma separated, e.g. New, Best Seller)</label>
@@ -3992,6 +4082,59 @@ const Wishlist = () => {
   );
 };
 
+const About = () => {
+  const { settings } = useSettings();
+  return (
+    <div className="pt-32 pb-24">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="relative h-[400px] md:h-[600px] rounded-[3rem] overflow-hidden shadow-2xl"
+          >
+            <img
+              src={settings?.about?.image || "https://images.unsplash.com/photo-1573408302185-06ff321cf6e6?auto=format&fit=crop&q=80&w=1000"}
+              alt="Our Story"
+              className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+            />
+            <div className="absolute inset-0 bg-gold-900/10" />
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="space-y-8"
+          >
+            <div className="space-y-4">
+              <span className="text-gold-600 font-bold tracking-[0.3em] uppercase text-xs">Since 2024</span>
+              <h1 className="text-5xl md:text-7xl font-serif font-bold text-gray-900 leading-tight">
+                {settings?.about?.title || "Our Story"}
+              </h1>
+              <div className="w-24 h-1.5 bg-gold-600" />
+            </div>
+            <div className="prose prose-lg text-gray-600 leading-relaxed font-light">
+              <p className="whitespace-pre-wrap">
+                {settings?.about?.content || "Prahvi Jewelry was born out of a passion for creating beautiful, high-quality jewelry that everyone can afford. We believe that luxury should be accessible, not exclusive. Our pieces are carefully crafted to bring a touch of elegance to your everyday life."}
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-8 pt-8 border-t border-gray-100">
+              <div>
+                <h4 className="text-3xl font-serif font-bold text-gray-900">100%</h4>
+                <p className="text-sm text-gray-500 uppercase tracking-widest mt-1">Authentic</p>
+              </div>
+              <div>
+                <h4 className="text-3xl font-serif font-bold text-gray-900">5000+</h4>
+                <p className="text-sm text-gray-500 uppercase tracking-widest mt-1">Happy Clients</p>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function App() {
   return (
     <SettingsProvider>
@@ -4006,6 +4149,7 @@ export default function App() {
                   <Route path="/" element={<Home />} />
                   <Route path="/shop" element={<Shop />} />
                   <Route path="/product/:id" element={<ProductDetail />} />
+                  <Route path="/about" element={<About />} />
                   <Route path="/cart" element={<Cart />} />
                   <Route path="/wishlist" element={<Wishlist />} />
                   <Route path="/checkout" element={<Checkout />} />
