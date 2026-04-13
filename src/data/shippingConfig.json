@@ -3,14 +3,14 @@
     "delhivery": {
       "id": "delhivery",
       "name": "Delhivery",
-      "baseRate": 60,
+      "baseRate": 99,
       "weightSlabs": [
-        { "maxWeight": 0.5, "rate": 40 },
-        { "maxWeight": 1, "rate": 60 },
-        { "maxWeight": 2, "rate": 80 },
-        { "maxWeight": 5, "rate": 120 },
-        { "maxWeight": 10, "rate": 200 },
-        { "maxWeight": 50, "rate": 500 }
+        { "maxWeight": 0.5, "rate": 99 },
+        { "maxWeight": 1, "rate": 99 },
+        { "maxWeight": 2, "rate": 99 },
+        { "maxWeight": 5, "rate": 99 },
+        { "maxWeight": 10, "rate": 99 },
+        { "maxWeight": 50, "rate": 99 }
       ],
       "zoneMultipliers": {
         "metro": 1.0,
@@ -30,14 +30,14 @@
     "fedex": {
       "id": "fedex",
       "name": "FedEx",
-      "baseRate": 100,
+      "baseRate": 99,
       "weightSlabs": [
-        { "maxWeight": 0.5, "rate": 80 },
-        { "maxWeight": 1, "rate": 100 },
-        { "maxWeight": 2, "rate": 150 },
-        { "maxWeight": 5, "rate": 250 },
-        { "maxWeight": 10, "rate": 400 },
-        { "maxWeight": 50, "rate": 1000 }
+        { "maxWeight": 0.5, "rate": 99 },
+        { "maxWeight": 1, "rate": 99 },
+        { "maxWeight": 2, "rate": 99 },
+        { "maxWeight": 5, "rate": 99 },
+        { "maxWeight": 10, "rate": 99 },
+        { "maxWeight": 50, "rate": 99 }
       ],
       "zoneMultipliers": {
         "metro": 1.0,
@@ -57,14 +57,14 @@
     "ecomexpress": {
       "id": "ecomexpress",
       "name": "Ecom Express",
-      "baseRate": 55,
+      "baseRate": 99,
       "weightSlabs": [
-        { "maxWeight": 0.5, "rate": 35 },
-        { "maxWeight": 1, "rate": 55 },
-        { "maxWeight": 2, "rate": 75 },
-        { "maxWeight": 5, "rate": 110 },
-        { "maxWeight": 10, "rate": 180 },
-        { "maxWeight": 50, "rate": 450 }
+        { "maxWeight": 0.5, "rate": 99 },
+        { "maxWeight": 1, "rate": 99 },
+        { "maxWeight": 2, "rate": 99 },
+        { "maxWeight": 5, "rate": 99 },
+        { "maxWeight": 10, "rate": 99 },
+        { "maxWeight": 50, "rate": 99 }
       ],
       "zoneMultipliers": {
         "metro": 1.0,
