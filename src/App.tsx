@@ -9,7 +9,7 @@ import * as LucideIcons from 'lucide-react';
 import { ShoppingCart, User as UserIcon, Menu, X, Phone, Instagram, Facebook, Mail, MapPin, ChevronRight, Star, Trash2, Plus, Minus, Heart, Shield, Truck, RefreshCcw, LayoutDashboard, Package, ListTree, ShoppingBag, MessageSquare, Settings, LogOut, ExternalLink, Upload, AlertTriangle, TrendingUp, CreditCard, Sparkles, Coins, Diamond, Flower, Circle, Watch, Hexagon, Gift, MoreHorizontal } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Product, Category, Order, Review, Policy, ContactMessage, OrderItem, StoreSettings, Feature } from './types';
+import { Product, Category, Order, Review, Policy, ContactMessage, OrderItem, StoreSettings, Feature, Variation } from './types';
 import { ProductCard } from './components/ProductCard';
 import { CartProvider, WishlistProvider, SettingsProvider, useCart, useWishlist, useSettings, useAuth } from './contexts/StoreContext';
 
@@ -974,6 +974,7 @@ const ProductDetail = () => {
   const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
   const [submittingReview, setSubmittingReview] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string>('');
+  const [selectedVariation, setSelectedVariation] = useState<Variation | null>(null);
   const [showSizeConfirm, setShowSizeConfirm] = useState(false);
   const [isBuyNowPending, setIsBuyNowPending] = useState(false);
   const { user } = useAuth();
@@ -1277,17 +1278,17 @@ const ProductDetail = () => {
           <div className="space-y-4">
             <h1 className="text-3xl sm:text-4xl font-serif text-gray-900 lowercase first-letter:uppercase leading-tight">{product.name}</h1>
             <div className="flex items-center space-x-4">
-              {product.originalPrice && product.originalPrice > product.price && (
+              {product.originalPrice && product.originalPrice > (selectedVariation?.price || product.price) && (
                 <span className="text-gray-400 line-through text-xl">₹{product.originalPrice.toLocaleString()}</span>
               )}
-              <span className="text-3xl font-bold text-gray-900">₹{product.price.toLocaleString()}</span>
-              {product.stock === 0 && (
+              <span className="text-3xl font-bold text-gray-900">₹{(selectedVariation?.price || product.price).toLocaleString()}</span>
+              {(selectedVariation ? selectedVariation.stock : product.stock) === 0 && (
                 <span className="bg-black text-white text-[10px] px-3 py-1 rounded-full uppercase font-bold tracking-widest">Sold Out</span>
               )}
             </div>
           </div>
 
-          {product.stock === 0 && (
+          {(selectedVariation ? selectedVariation.stock : product.stock) === 0 && (
             <div className="flex items-center space-x-2 text-gray-500 text-sm">
               <div className="w-2 h-2 rounded-full bg-gray-300" />
               <span>Out of stock</span>
@@ -1305,7 +1306,7 @@ const ProductDetail = () => {
                 </button>
                 <span className="w-12 text-center font-bold text-lg">{detailQuantity}</span>
                 <button 
-                  onClick={() => setDetailQuantity(prev => Math.min(product.stock, prev + 1))}
+                  onClick={() => setDetailQuantity(prev => Math.min(selectedVariation ? selectedVariation.stock : product.stock, prev + 1))}
                   className="px-6 h-full hover:bg-gray-50 transition-colors text-gray-400"
                 >
                   <Plus size={18} />
@@ -1313,33 +1314,43 @@ const ProductDetail = () => {
               </div>
               <button
                 onClick={() => {
+                  if (product.variations && product.variations.length > 0 && !selectedVariation) {
+                    toast.error("Please select a variation");
+                    return;
+                  }
                   if (product.sizes && product.sizes.length > 0 && !selectedSize) {
                     setIsBuyNowPending(false);
                     setShowSizeConfirm(true);
                     return;
                   }
-                  if (product.stock > 0) addToCart(product, detailQuantity, selectedSize);
+                  if ((selectedVariation ? selectedVariation.stock : product.stock) > 0) {
+                    addToCart(product, detailQuantity, selectedVariation || undefined);
+                  }
                 }}
-                disabled={product.stock === 0}
+                disabled={(selectedVariation ? selectedVariation.stock : product.stock) === 0}
                 className={`flex-grow h-14 rounded-md font-bold uppercase tracking-widest transition-all border ${
-                  product.stock > 0 
+                  (selectedVariation ? selectedVariation.stock : product.stock) > 0 
                   ? 'border-gray-900 text-gray-900 hover:bg-gray-50' 
                   : 'border-gray-200 text-gray-400 cursor-not-allowed'
                 }`}
               >
-                {product.stock > 0 ? 'Add to Shopping Bag' : 'Sold Out'}
+                {(selectedVariation ? selectedVariation.stock : product.stock) > 0 ? 'Add to Shopping Bag' : 'Sold Out'}
               </button>
             </div>
             
-            {product.stock > 0 && (
+            {(selectedVariation ? selectedVariation.stock : product.stock) > 0 && (
               <button 
                 onClick={() => {
+                  if (product.variations && product.variations.length > 0 && !selectedVariation) {
+                    toast.error("Please select a variation");
+                    return;
+                  }
                   if (product.sizes && product.sizes.length > 0 && !selectedSize) {
                     setIsBuyNowPending(true);
                     setShowSizeConfirm(true);
                     return;
                   }
-                  addToCart(product, detailQuantity, selectedSize);
+                  addToCart(product, detailQuantity, selectedVariation || undefined);
                   navigate('/checkout');
                 }}
                 className="w-full bg-black text-white h-14 rounded-md font-bold uppercase tracking-widest hover:bg-gray-800 transition-all shadow-lg"
@@ -1379,6 +1390,41 @@ const ProductDetail = () => {
           <div className="prose prose-gold max-w-none pt-8 border-t border-gray-100">
             <p className="text-gray-600 leading-relaxed text-lg">{product.description}</p>
           </div>
+
+          {/* Variation Selection */}
+          {product.variations && product.variations.length > 0 && (
+            <div className="space-y-4 pt-8 border-t border-gray-100">
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Select Variation</label>
+              <div className="flex flex-wrap gap-3">
+                {product.variations.map(variation => (
+                  <button
+                    key={variation.id}
+                    onClick={() => {
+                      setSelectedVariation(variation);
+                      setDetailQuantity(1);
+                    }}
+                    className={`px-6 py-3 rounded-xl border-2 text-sm font-bold transition-all flex flex-col items-start min-w-[120px] ${
+                      selectedVariation?.id === variation.id 
+                      ? 'border-gold-600 bg-gold-50 text-gold-600' 
+                      : 'border-gray-100 text-gray-600 hover:border-gray-200'
+                    }`}
+                  >
+                    <span className="text-xs uppercase tracking-wider opacity-60">{variation.type}</span>
+                    <span className="text-base">{variation.name}</span>
+                    {variation.price && (
+                      <span className="text-xs mt-1">₹{variation.price.toLocaleString()}</span>
+                    )}
+                    {variation.stock <= 5 && variation.stock > 0 && (
+                      <span className="text-[10px] text-red-500 mt-1">Only {variation.stock} left!</span>
+                    )}
+                    {variation.stock === 0 && (
+                      <span className="text-[10px] text-gray-400 mt-1">Sold Out</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Size Selection */}
           {product.sizes && product.sizes.length > 0 && (
@@ -1607,24 +1653,24 @@ const Cart = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 sm:gap-16">
         <div className="lg:col-span-2 space-y-4 sm:space-y-8">
           {cart.map(item => (
-            <div key={`${item.productId}-${item.selectedSize || 'no-size'}`} className="flex items-start sm:items-center space-x-4 sm:space-x-6 py-4 sm:py-6 border-b border-gray-100">
+            <div key={`${item.productId}-${item.variationId || 'no-var'}`} className="flex items-start sm:items-center space-x-4 sm:space-x-6 py-4 sm:py-6 border-b border-gray-100">
               <div className="w-20 h-28 sm:w-24 sm:h-32 rounded-xl overflow-hidden bg-gray-50 shrink-0">
                 <img src={item.image} alt={item.name} className="w-full h-full object-contain" referrerPolicy="no-referrer" />
               </div>
               <div className="flex-grow space-y-1 min-w-0">
                 <h3 className="text-base sm:text-lg font-serif font-bold truncate">{item.name}</h3>
                 {item.selectedSize && (
-                  <p className="text-[10px] font-bold text-gold-600 uppercase tracking-widest">Size: {item.selectedSize}</p>
+                  <p className="text-[10px] font-bold text-gold-600 uppercase tracking-widest">Variation: {item.selectedSize}</p>
                 )}
                 <p className="text-gold-600 font-medium text-sm sm:text-base">₹{item.price.toLocaleString()}</p>
                 
                 <div className="flex items-center justify-between sm:justify-start sm:space-x-8 pt-2">
                   <div className="flex items-center border border-gray-200 rounded-lg bg-white">
-                    <button onClick={() => updateQuantity(item.productId, item.quantity - 1, item.selectedSize)} className="p-1.5 sm:p-2 hover:bg-gray-50"><Minus size={14} /></button>
+                    <button onClick={() => updateQuantity(item.productId, item.quantity - 1, item.variationId)} className="p-1.5 sm:p-2 hover:bg-gray-50"><Minus size={14} /></button>
                     <span className="w-6 sm:w-8 text-center font-medium text-sm">{item.quantity}</span>
-                    <button onClick={() => updateQuantity(item.productId, item.quantity + 1, item.selectedSize)} className="p-1.5 sm:p-2 hover:bg-gray-50"><Plus size={14} /></button>
+                    <button onClick={() => updateQuantity(item.productId, item.quantity + 1, item.variationId)} className="p-1.5 sm:p-2 hover:bg-gray-50"><Plus size={14} /></button>
                   </div>
-                  <button onClick={() => removeFromCart(item.productId, item.selectedSize)} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
+                  <button onClick={() => removeFromCart(item.productId, item.variationId)} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
                     <Trash2 size={18} />
                   </button>
                 </div>
@@ -3309,7 +3355,7 @@ const AdminProducts = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState({
     name: '', description: '', price: 0, originalPrice: 0, category: '', images: '', stock: 0, featured: false,
-    specs: '', labels: '', videoUrl: '', relatedProductIds: '', sizes: '', weight: 0
+    specs: '', labels: '', videoUrl: '', relatedProductIds: '', sizes: '', weight: 0, variations: ''
   });
 
   useEffect(() => {
@@ -3352,6 +3398,18 @@ const AdminProducts = () => {
       labels: (formData.labels || '').split(',').map(s => s.trim()).filter(Boolean),
       relatedProductIds: (formData.relatedProductIds || '').split(',').map(s => s.trim()).filter(Boolean),
       sizes: (formData.sizes || '').split(',').map(s => s.trim()).filter(Boolean),
+      variations: (formData.variations || '').split('\n').map(line => {
+        const parts = line.split(',').map(s => s.trim());
+        if (parts.length < 2) return null;
+        const [name, type, price, stock] = parts;
+        return {
+          id: Math.random().toString(36).substr(2, 9),
+          name,
+          type: (type || 'size') as any,
+          price: price ? Number(price) : undefined,
+          stock: stock ? Number(stock) : 0
+        };
+      }).filter(Boolean),
       weight: Number(formData.weight || 0),
       specs: (formData.specs || '').split('\n').reduce((acc: any, line) => {
         const [key, ...val] = line.split(':');
@@ -3387,7 +3445,7 @@ const AdminProducts = () => {
           onClick={() => {
             setEditingProduct(null);
             setFormData({
-              name: '', description: '', price: 0, originalPrice: 0, category: '', images: '', stock: 0, featured: false, specs: '', labels: '', videoUrl: '', relatedProductIds: '', sizes: '', weight: 0
+              name: '', description: '', price: 0, originalPrice: 0, category: '', images: '', stock: 0, featured: false, specs: '', labels: '', videoUrl: '', relatedProductIds: '', sizes: '', weight: 0, variations: ''
             });
             setIsModalOpen(true);
           }}
@@ -3457,6 +3515,7 @@ const AdminProducts = () => {
                           videoUrl: product.videoUrl || '',
                           relatedProductIds: (product.relatedProductIds || []).join(', '),
                           sizes: (product.sizes || []).join(', '),
+                          variations: product.variations ? product.variations.map(v => `${v.name}, ${v.type}, ${v.price || ''}, ${v.stock}`).join('\n') : '',
                           weight: product.weight || 0,
                           specs: product.specs ? Object.entries(product.specs).map(([k, v]) => `${k}: ${v}`).join('\n') : '',
                           labels: (product.labels || []).join(', ')
@@ -3585,6 +3644,11 @@ const AdminProducts = () => {
                   <div className="space-y-2 col-span-2">
                     <label className="text-sm font-medium">Available Sizes (comma separated, e.g. 6, 7, 8 or 2.4, 2.6)</label>
                     <input type="text" value={formData.sizes || ''} onChange={e => setFormData({ ...formData, sizes: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200" placeholder="6, 7, 8, 9" />
+                  </div>
+                  <div className="space-y-2 col-span-2">
+                    <label className="text-sm font-medium">Product Variations (One per line, format: Name, Type, Price, Stock)</label>
+                    <textarea rows={4} value={formData.variations || ''} onChange={e => setFormData({ ...formData, variations: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200 font-mono text-sm" placeholder="Small, size, 500, 10&#10;Red, color, 600, 5" />
+                    <p className="text-[10px] text-gray-400">Type can be: size, color, material, other. Price is optional (uses base price if empty).</p>
                   </div>
                   <div className="space-y-2 col-span-2">
                     <label className="text-sm font-medium">Product Labels (comma separated, e.g. New, Best Seller)</label>
@@ -3777,6 +3841,17 @@ const AdminAbandonedCarts = () => {
     window.open(url, '_blank');
   };
 
+  const deleteCart = async (id: string) => {
+    if (!window.confirm("Delete this abandoned bag?")) return;
+    try {
+      await deleteDoc(doc(db, 'orders', id));
+      setCarts(carts.filter(c => c.id !== id));
+      toast.success("Deleted");
+    } catch (error) {
+      toast.error("Failed to delete");
+    }
+  };
+
   if (loading) return <div className="pt-20 text-center font-serif text-xl">Loading abandoned bags...</div>;
 
   return (
@@ -3810,13 +3885,21 @@ const AdminAbandonedCarts = () => {
                   {cart.createdAt ? new Date(cart.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}
                 </td>
                 <td className="px-6 py-4">
-                  <button
-                    onClick={() => sendReminder(cart)}
-                    className="flex items-center space-x-2 text-xs font-bold text-green-600 hover:text-green-700 bg-green-50 px-4 py-2 rounded-full transition-all"
-                  >
-                    <Phone size={14} />
-                    <span>Send Reminder</span>
-                  </button>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => sendReminder(cart)}
+                      className="flex items-center space-x-2 text-xs font-bold text-green-600 hover:text-green-700 bg-green-50 px-4 py-2 rounded-full transition-all"
+                    >
+                      <Phone size={14} />
+                      <span>Send Reminder</span>
+                    </button>
+                    <button
+                      onClick={() => deleteCart(cart.id)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-all"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -3882,6 +3965,30 @@ const AdminOrders = () => {
     window.open(url, '_blank');
   };
 
+  const deleteOrder = async (orderId: string) => {
+    if (!window.confirm("Are you sure you want to delete this order? This cannot be undone.")) return;
+    try {
+      await deleteDoc(doc(db, 'orders', orderId));
+      setOrders(orders.filter(o => o.id !== orderId));
+      toast.success("Order deleted");
+    } catch (error) {
+      toast.error("Delete failed");
+    }
+  };
+
+  const clearAllOrders = async () => {
+    if (!window.confirm("CRITICAL: This will delete ALL orders from your database. This cannot be undone. Are you absolutely sure?")) return;
+    try {
+      const snap = await getDocs(collection(db, 'orders'));
+      const deletePromises = snap.docs.map(doc => deleteDoc(doc.ref));
+      await Promise.all(deletePromises);
+      setOrders([]);
+      toast.success("All orders cleared!");
+    } catch (error) {
+      toast.error("Failed to clear orders");
+    }
+  };
+
   const exportToCSV = () => {
     const headers = ['Order ID', 'Date', 'Customer Name', 'Phone', 'Email', 'Total', 'Status', 'Payment Method', 'Address'];
     const rows = orders.map(o => [
@@ -3912,13 +4019,22 @@ const AdminOrders = () => {
     <div className="space-y-8">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-serif font-bold">Manage Orders</h1>
-        <button
-          onClick={exportToCSV}
-          className="flex items-center space-x-2 px-6 py-3 bg-gold-600 text-white rounded-xl font-bold hover:bg-gold-500 transition-all shadow-lg shadow-gold-600/20"
-        >
-          <LucideIcons.Download size={18} />
-          <span>Export CSV</span>
-        </button>
+        <div className="flex items-center space-x-4">
+          <button
+            onClick={clearAllOrders}
+            className="flex items-center space-x-2 px-6 py-3 bg-red-50 text-red-600 rounded-xl font-bold hover:bg-red-100 transition-all"
+          >
+            <LucideIcons.Trash2 size={18} />
+            <span>Clear All</span>
+          </button>
+          <button
+            onClick={exportToCSV}
+            className="flex items-center space-x-2 px-6 py-3 bg-gold-600 text-white rounded-xl font-bold hover:bg-gold-500 transition-all shadow-lg shadow-gold-600/20"
+          >
+            <LucideIcons.Download size={18} />
+            <span>Export CSV</span>
+          </button>
+        </div>
       </div>
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <table className="w-full text-left">
@@ -3938,6 +4054,15 @@ const AdminOrders = () => {
                 <td className="px-6 py-4">
                   <div className="text-sm font-medium text-gray-900">{order.customerName}</div>
                   <div className="text-xs text-gray-500">{order.customerPhone}</div>
+                  <div className="mt-2 space-y-1">
+                    {order.items.map((item, i) => (
+                      <div key={i} className="text-[10px] text-gray-500 flex items-center space-x-1">
+                        <span className="font-medium">{item.quantity}x</span>
+                        <span className="truncate max-w-[150px]">{item.name}</span>
+                        {item.selectedSize && <span className="text-gold-600 font-bold">({item.selectedSize})</span>}
+                      </div>
+                    ))}
+                  </div>
                   {order.trackingNumber && (
                     <div className="mt-1 flex items-center space-x-2">
                       <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded font-mono">
@@ -3992,6 +4117,13 @@ const AdminOrders = () => {
                       title="Edit Tracking Info"
                     >
                       <Truck size={14} />
+                    </button>
+                    <button
+                      onClick={() => deleteOrder(order.id)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-all"
+                      title="Delete Order"
+                    >
+                      <Trash2 size={14} />
                     </button>
                   </div>
                 </td>
@@ -4208,6 +4340,7 @@ const AdminMessages = () => {
 };
 
 const Wishlist = () => {
+  const navigate = useNavigate();
   const { wishlist, toggleWishlist } = useWishlist();
   const { addToCart } = useCart();
   const [products, setProducts] = useState<Product[]>([]);
@@ -4252,13 +4385,17 @@ const Wishlist = () => {
                 <ProductCard product={product} />
                 <button
                   onClick={() => {
-                    addToCart(product, 1);
-                    toggleWishlist(product.id);
+                    if (product.variations && product.variations.length > 0) {
+                      navigate(`/product/${product.id}`);
+                    } else {
+                      addToCart(product, 1);
+                      toggleWishlist(product.id);
+                    }
                   }}
                   className="w-full py-3 bg-gray-900 text-white rounded-xl font-bold text-sm hover:bg-gold-600 transition-all flex items-center justify-center space-x-2"
                 >
                   <ShoppingBag size={16} />
-                  <span>Move to Bag</span>
+                  <span>{product.variations && product.variations.length > 0 ? 'View Options' : 'Move to Bag'}</span>
                 </button>
               </div>
             ))}
