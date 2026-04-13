@@ -5,19 +5,30 @@ import { auth, db, storage, loginWithGoogle, logout } from './firebase';
 import { doc, getDoc, collection, query, where, limit, getDocs, addDoc, serverTimestamp, updateDoc, deleteDoc, orderBy, setDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Toaster, toast } from 'sonner';
-import * as LucideIcons from 'lucide-react';
 import { 
   ShoppingCart, User as UserIcon, Menu, X, Phone, Instagram, Facebook, Mail, MapPin, 
   ChevronRight, Star, Trash2, Plus, Minus, Heart, Shield, Truck, RefreshCcw, 
   LayoutDashboard, Package, ListTree, ShoppingBag, MessageSquare, Settings, 
   LogOut, ExternalLink, Upload, AlertTriangle, TrendingUp, CreditCard, Sparkles, 
-  Coins, Diamond, Flower, Circle, Watch, Hexagon, Gift, MoreHorizontal, Edit2, Download 
+  Coins, Diamond, Flower, Circle, Watch, Hexagon, Gift, MoreHorizontal, Edit2, Download,
+  MessageCircle, Search, Info, Play, Share2, Ruler, QrCode, CheckCircle,
+  Clock, Globe, Headphones, Lock, Percent, RotateCcw, Smile, Tag, ThumbsUp, Zap
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Product, Category, Order, Review, Policy, ContactMessage, OrderItem, StoreSettings, Feature, Variation } from './types';
 import { ProductCard } from './components/ProductCard';
 import { CartProvider, WishlistProvider, SettingsProvider, useCart, useWishlist, useSettings, useAuth } from './contexts/StoreContext';
+
+const LucideIcons: any = {
+  ShoppingCart, User: UserIcon, Menu, X, Phone, Instagram, Facebook, Mail, MapPin, 
+  ChevronRight, Star, Trash2, Plus, Minus, Heart, Shield, Truck, RefreshCcw, 
+  LayoutDashboard, Package, ListTree, ShoppingBag, MessageSquare, Settings, 
+  LogOut, ExternalLink, Upload, AlertTriangle, TrendingUp, CreditCard, Sparkles, 
+  Coins, Diamond, Flower, Circle, Watch, Hexagon, Gift, MoreHorizontal, Edit2, Download,
+  MessageCircle, Search, Info, Play, Share2, Ruler, QrCode, CheckCircle,
+  Clock, Globe, Headphones, Lock, Percent, RotateCcw, Smile, Tag, ThumbsUp, Zap
+};
 
 // --- Components ---
 
@@ -296,7 +307,7 @@ const WhatsAppButton = () => {
       className="fixed bottom-8 right-8 z-[100] bg-green-500 text-white p-4 rounded-full shadow-2xl hover:bg-green-600 transition-all hover:scale-110 group"
       aria-label="Chat on WhatsApp"
     >
-      <LucideIcons.MessageCircle size={28} />
+      <MessageCircle size={28} />
       <span className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-white text-gray-900 px-4 py-2 rounded-xl text-sm font-bold shadow-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-gray-100">
         Chat with us!
       </span>
@@ -367,7 +378,7 @@ const Navbar = () => {
               onClick={() => setIsSearchOpen(true)}
               className="p-2 text-gray-600 hover:text-gold-600 transition-colors"
             >
-              <LucideIcons.Search size={20} className="sm:w-5 sm:h-5" />
+              <Search size={20} className="sm:w-5 sm:h-5" />
             </button>
             <Link to="/wishlist" className="relative p-2 text-gray-600 hover:text-gold-600 transition-colors">
               <Heart size={20} className="sm:w-5 sm:h-5" />
@@ -406,7 +417,7 @@ const Navbar = () => {
           >
             <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between border-b border-gray-100">
               <form onSubmit={handleSearch} className="flex-grow flex items-center">
-                <LucideIcons.Search size={24} className="text-gray-400 mr-4" />
+                <Search size={24} className="text-gray-400 mr-4" />
                 <input
                   autoFocus
                   type="text"
@@ -1250,7 +1261,7 @@ const ProductDetail = () => {
               className="relative bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center space-y-6"
             >
               <div className="w-16 h-16 bg-gold-50 text-gold-600 rounded-full flex items-center justify-center mx-auto">
-                <LucideIcons.Info size={32} />
+                <Info size={32} />
               </div>
               <div className="space-y-2">
                 <h3 className="text-xl font-serif font-bold">No Size Selected</h3>
@@ -1322,7 +1333,7 @@ const ProductDetail = () => {
                   }}
                   className="bg-white/90 backdrop-blur p-3 rounded-full shadow-lg text-gold-600 hover:bg-gold-600 hover:text-white transition-all flex items-center space-x-2 group"
                 >
-                  <LucideIcons.Play size={20} fill="currentColor" />
+                  <Play size={20} fill="currentColor" />
                   <span className="text-xs font-bold pr-2 hidden group-hover:block">Watch Video</span>
                 </button>
               </div>
@@ -1445,7 +1456,7 @@ const ProductDetail = () => {
               }}
               className="flex items-center space-x-2 text-gray-500 text-sm hover:text-gray-900 transition-colors font-medium"
             >
-              <LucideIcons.Share2 size={16} />
+              <Share2 size={16} />
               <span>Share</span>
             </button>
             <button 
@@ -1505,7 +1516,7 @@ const ProductDetail = () => {
                   onClick={() => setIsSizeGuideOpen(true)}
                   className="text-[10px] font-bold text-gold-600 hover:underline flex items-center space-x-1"
                 >
-                  <LucideIcons.Ruler size={12} />
+                  <Ruler size={12} />
                   <span>Size Guide</span>
                 </button>
               </div>
@@ -1537,7 +1548,7 @@ const ProductDetail = () => {
                     onClick={() => setIsSizeGuideOpen(true)}
                     className="text-xs font-bold text-gold-600 hover:underline flex items-center space-x-1"
                   >
-                    <LucideIcons.Ruler size={14} />
+                    <Ruler size={14} />
                     <span>Size Guide</span>
                   </button>
                 )}
@@ -2165,7 +2176,7 @@ const Checkout = () => {
                 >
                   <div className="flex items-center space-x-3">
                     <div className={`p-2 rounded-lg ${paymentMethod === 'upi' ? 'bg-gold-200 text-gold-700' : 'bg-gray-100 text-gray-500'}`}>
-                      <LucideIcons.QrCode size={20} />
+                      <QrCode size={20} />
                     </div>
                     <div className="text-left">
                       <p className="text-sm font-bold">UPI / QR</p>
@@ -2203,7 +2214,7 @@ const Checkout = () => {
                   <img src={settings.upiQrCode} alt="UPI QR Code" className="w-48 h-48 mx-auto rounded-xl border-4 border-white shadow-sm" />
                 ) : (
                   <div className="w-48 h-48 mx-auto bg-gray-200 rounded-xl flex items-center justify-center text-gray-400">
-                    <LucideIcons.QrCode size={48} />
+                    <QrCode size={48} />
                   </div>
                 )}
                 {settings.upiId && (
@@ -2231,7 +2242,7 @@ const Checkout = () => {
                   >
                     {paymentScreenshot ? (
                       <div className="flex items-center space-x-2 text-green-600">
-                        <LucideIcons.CheckCircle size={20} />
+                        <CheckCircle size={20} />
                         <span className="text-sm font-medium">Screenshot Uploaded</span>
                       </div>
                     ) : (
@@ -4509,7 +4520,7 @@ const AdminMessages = () => {
                   <p className="text-sm text-gold-600">{msg.email}</p>
                   <span className="text-gray-300">|</span>
                   <p className="text-sm text-gold-600 flex items-center space-x-1">
-                    <LucideIcons.Phone size={14} />
+                    <Phone size={14} />
                     <span>{msg.phone}</span>
                   </p>
                 </div>
