@@ -6,7 +6,13 @@ import { doc, getDoc, collection, query, where, limit, getDocs, addDoc, serverTi
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Toaster, toast } from 'sonner';
 import * as LucideIcons from 'lucide-react';
-import { ShoppingCart, User as UserIcon, Menu, X, Phone, Instagram, Facebook, Mail, MapPin, ChevronRight, Star, Trash2, Plus, Minus, Heart, Shield, Truck, RefreshCcw, LayoutDashboard, Package, ListTree, ShoppingBag, MessageSquare, Settings, LogOut, ExternalLink, Upload, AlertTriangle, TrendingUp, CreditCard, Sparkles, Coins, Diamond, Flower, Circle, Watch, Hexagon, Gift, MoreHorizontal } from 'lucide-react';
+import { 
+  ShoppingCart, User as UserIcon, Menu, X, Phone, Instagram, Facebook, Mail, MapPin, 
+  ChevronRight, Star, Trash2, Plus, Minus, Heart, Shield, Truck, RefreshCcw, 
+  LayoutDashboard, Package, ListTree, ShoppingBag, MessageSquare, Settings, 
+  LogOut, ExternalLink, Upload, AlertTriangle, TrendingUp, CreditCard, Sparkles, 
+  Coins, Diamond, Flower, Circle, Watch, Hexagon, Gift, MoreHorizontal, Edit2, Download 
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Product, Category, Order, Review, Policy, ContactMessage, OrderItem, StoreSettings, Feature, Variation } from './types';
@@ -3773,7 +3779,7 @@ const AdminCategories = () => {
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-serif font-bold">Manage Categories</h1>
+        <h1 className="text-3xl font-serif font-bold">Manage Categories v2</h1>
         <button 
           onClick={() => {
             setEditingCategory(null);
@@ -3806,7 +3812,7 @@ const AdminCategories = () => {
                   className="p-1.5 text-gray-400 hover:text-gold-600 transition-colors"
                   title="Edit Category"
                 >
-                  <LucideIcons.Edit2 size={14} />
+                  <Edit2 size={14} />
                 </button>
                 <button
                   onClick={async () => {
@@ -4066,21 +4072,21 @@ const AdminOrders = () => {
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-serif font-bold">Manage Orders</h1>
+        <h1 className="text-3xl font-serif font-bold">Manage Orders v2</h1>
         <div className="flex items-center space-x-4">
+          <button
+            onClick={exportToCSV}
+            className="flex items-center space-x-2 px-6 py-3 bg-gold-600 text-white rounded-xl font-bold hover:bg-gold-500 transition-all shadow-lg shadow-gold-600/20"
+          >
+            <Download size={18} />
+            <span>Export CSV</span>
+          </button>
           <button
             onClick={clearAllOrders}
             className="flex items-center space-x-2 px-6 py-3 bg-red-50 text-red-600 rounded-xl font-bold hover:bg-red-100 transition-all"
           >
             <Trash2 size={18} />
             <span>Clear All</span>
-          </button>
-          <button
-            onClick={exportToCSV}
-            className="flex items-center space-x-2 px-6 py-3 bg-gold-600 text-white rounded-xl font-bold hover:bg-gold-500 transition-all shadow-lg shadow-gold-600/20"
-          >
-            <LucideIcons.Download size={18} />
-            <span>Export CSV</span>
           </button>
         </div>
       </div>
