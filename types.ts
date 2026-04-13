@@ -1,46 +1,160 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
-@import "tailwindcss";
-
-@theme {
-  --font-serif: "Cormorant Garamond", serif;
-  --font-sans: "Inter", sans-serif;
-  
-  --color-gold-50: #fbfaf7;
-  --color-gold-100: #f4f1e8;
-  --color-gold-200: #e7e0cc;
-  --color-gold-300: #d5c8a5;
-  --color-gold-400: #c1ab7b;
-  --color-gold-500: #b1955d;
-  --color-gold-600: #a1814b;
-  --color-gold-700: #866a41;
-  --color-gold-800: #6f5839;
-  --color-gold-900: #5c4a32;
-  --color-gold-950: #33281a;
+export interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  originalPrice?: number;
+  category: string;
+  images: string[];
+  stock: number;
+  featured: boolean;
+  createdAt: any;
+  specs?: { [key: string]: string };
+  labels?: string[];
+  videoUrl?: string;
+  relatedProductIds?: string[];
+  sizes?: string[];
+  weight?: number; // in kg
 }
 
-@layer base {
-  body {
-    @apply font-sans text-gray-900 bg-white antialiased;
-  }
-  
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-serif;
-  }
+export interface Category {
+  id: string;
+  name: string;
+  description: string;
+  image: string;
 }
 
-.glass {
-  @apply bg-white/70 backdrop-blur-md border border-white/20;
+export interface OrderItem {
+  productId: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image: string;
+  stock: number;
+  selectedSize?: string;
+  weight?: number; // in kg
 }
 
-.gold-gradient {
-  background: linear-gradient(135deg, #b1955d 0%, #d5c8a5 50%, #b1955d 100%);
+export interface Order {
+  id: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  shippingAddress: {
+    addressLine1: string;
+    addressLine2?: string;
+    city: string;
+    state: string;
+    pincode: string;
+  };
+  items: OrderItem[];
+  subtotal: number;
+  shippingFee: number;
+  total: number;
+  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
+  paymentMethod: 'whatsapp' | 'card' | 'upi';
+  paymentScreenshot?: string;
+  trackingNumber?: string;
+  trackingLink?: string;
+  isAbandoned?: boolean;
+  createdAt: any;
 }
 
-@utility no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-  &::-webkit-scrollbar {
-    display: none;
-  }
+export interface Review {
+  id: string;
+  productId: string;
+  customerName: string;
+  rating: number;
+  comment: string;
+  approved: boolean;
+  createdAt: any;
 }
 
+export interface Policy {
+  id: string;
+  title: string;
+  content: string;
+  type: 'shipping' | 'return' | 'privacy' | 'terms';
+}
+
+export interface ContactMessage {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  subject: string;
+  message: string;
+  createdAt: any;
+}
+
+export interface Feature {
+  icon: string;
+  title: string;
+  desc: string;
+}
+
+export interface StoreSettings {
+  siteName: string;
+  siteDescription: string;
+  address: string;
+  phone: string;
+  email: string;
+  workingHours: string;
+  instagram: string;
+  facebook: string;
+  whatsapp: string;
+  announcementBar?: {
+    text: string;
+    link?: string;
+    enabled: boolean;
+  };
+  hero: {
+    title: string;
+    subtitle: string;
+    description: string;
+    image: string;
+  };
+  about: {
+    title: string;
+    content: string;
+    image: string;
+  };
+  categorySection: {
+    title: string;
+    description: string;
+  };
+  newsletter: {
+    title: string;
+    description: string;
+  };
+  featuredSection: {
+    title: string;
+    description: string;
+  };
+  features: Feature[];
+  testimonials?: {
+    name: string;
+    content: string;
+    rating: number;
+    image?: string;
+  }[];
+  quickLinks?: { name: string; path: string }[];
+  paymentModes: {
+    whatsapp: boolean;
+    card: boolean;
+    upi: boolean;
+  };
+  upiId?: string;
+  upiQrCode?: string;
+  shipping: {
+    freeThreshold: number;
+    flatRate: number;
+    pincodeRates?: { [pincode: string]: number };
+  };
+  instagramGallery?: {
+    title: string;
+    description: string;
+    images: { url: string; link?: string }[];
+  };
+  categoryVisibility?: { [key: string]: boolean };
+}
