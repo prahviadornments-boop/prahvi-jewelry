@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Heart, Eye, Minus, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Product } from '../types';
@@ -7,6 +7,7 @@ import { useCart, useWishlist } from '../contexts/StoreContext';
 import { toast } from 'sonner';
 
 export const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
+  const navigate = useNavigate();
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const [quantity, setQuantity] = React.useState(1);
@@ -25,9 +26,15 @@ export const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
     return () => clearInterval(interval);
   }, [isHovered, product.images]);
 
+  const hasVariations = product.variations && product.variations.length > 0;
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (hasVariations) {
+      navigate(`/product/${product.id}`);
+      return;
+    }
     addToCart(product, quantity);
   };
 
@@ -156,7 +163,7 @@ export const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
               className="w-full bg-gray-900 text-white py-2 sm:py-3 rounded-xl font-bold text-[10px] sm:text-xs flex items-center justify-center space-x-1 sm:space-x-2 hover:bg-gold-600 transition-all shadow-sm disabled:bg-gray-200 disabled:cursor-not-allowed"
             >
               <ShoppingCart size={14} className="sm:w-4 sm:h-4" />
-              <span>{product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}</span>
+              <span>{product.stock > 0 ? (hasVariations ? 'View Options' : 'Add to Cart') : 'Out of Stock'}</span>
             </button>
           </div>
         </div>
