@@ -1551,7 +1551,38 @@ const ProductDetail = () => {
 
 const Cart = () => {
   const { cart, removeFromCart, updateQuantity, total } = useCart();
+  const { settings } = useSettings();
   const navigate = useNavigate();
+
+  const shippingFee = (total >= (settings.shipping?.freeThreshold || 5000)) ? 0 : (settings.shipping?.flatRate || 0);
+  const grandTotal = total + shippingFee;
+
+  const [calcPincode, setCalcPincode] = useState('');
+  const [calcRates, setCalcRates] = useState<any>(null);
+  const [isCalculating, setIsCalculating] = useState(false);
+
+  const totalWeight = cart.reduce((acc, item) => acc + (item.weight || 0.5) * item.quantity, 0);
+
+  const handleCalcShipping = async () => {
+    if (!calcPincode) return;
+    setIsCalculating(true);
+    try {
+      const res = await fetch('/api/calculate-shipping', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          toPincode: calcPincode,
+          weight: totalWeight
+        })
+      });
+      const data = await res.json();
+      setCalcRates(data.rates);
+    } catch (err) {
+      toast.error("Failed to calculate shipping");
+    } finally {
+      setIsCalculating(false);
+    }
+  };
 
   if (cart.length === 0) {
     return (
@@ -1612,11 +1643,20 @@ const Cart = () => {
               </div>
               <div className="flex justify-between text-gray-600">
                 <span>Shipping</span>
-                <span className="text-green-600 font-medium">Free</span>
+                {shippingFee === 0 ? (
+                  <span className="text-green-600 font-medium">Free</span>
+                ) : (
+                  <span>₹{shippingFee.toLocaleString()}</span>
+                )}
               </div>
+              {shippingFee > 0 && settings.shipping?.freeThreshold && (
+                <p className="text-[10px] text-gold-600 font-medium italic">
+                  Add ₹{(settings.shipping.freeThreshold - total).toLocaleString()} more for FREE shipping!
+                </p>
+              )}
               <div className="border-t border-gray-200 pt-4 flex justify-between text-base sm:text-lg font-bold text-gray-900">
                 <span>Total</span>
-                <span>₹{total.toLocaleString()}</span>
+                <span>₹{grandTotal.toLocaleString()}</span>
               </div>
             </div>
             <button
@@ -1625,6 +1665,41 @@ const Cart = () => {
             >
               Proceed to Checkout
             </button>
+          </div>
+
+          {/* Shipping Calculator */}
+          <div className="bg-white p-6 rounded-3xl border border-gray-100 space-y-4">
+            <h4 className="text-sm font-bold uppercase tracking-widest text-gray-400">Estimate Shipping</h4>
+            <div className="flex space-x-2">
+              <input 
+                type="text" 
+                placeholder="Enter Pincode" 
+                value={calcPincode}
+                onChange={e => setCalcPincode(e.target.value)}
+                className="flex-grow px-4 py-2 bg-gray-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-gold-400 outline-none"
+              />
+              <button 
+                onClick={handleCalcShipping}
+                disabled={isCalculating}
+                className="px-4 py-2 bg-gray-100 text-gray-900 rounded-xl text-sm font-bold hover:bg-gray-200 transition-all disabled:opacity-50"
+              >
+                {isCalculating ? '...' : 'Calculate'}
+              </button>
+            </div>
+            {calcRates && (
+              <div className="space-y-3 pt-2 animate-in fade-in slide-in-from-top-2">
+                <p className="text-xs text-gray-500">Available Couriers (Total Weight: {totalWeight}kg):</p>
+                {Object.values(calcRates).map((rate: any) => (
+                  <div key={rate.courierName} className="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
+                    <div>
+                      <p className="text-sm font-bold">{rate.courierName}</p>
+                      <p className="text-[10px] text-gray-400">Est. {rate.estimatedDays} days</p>
+                    </div>
+                    <span className="text-sm font-bold text-gold-600">₹{rate.finalCost}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -1651,10 +1726,46 @@ const Checkout = () => {
   const [paymentMethod, setPaymentMethod] = useState<'whatsapp' | 'card' | 'upi'>('whatsapp');
   const [paymentScreenshot, setPaymentScreenshot] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
+  const [availableRates, setAvailableRates] = useState<any>(null);
+  const [selectedCourier, setSelectedCourier] = useState<string>('');
+  const [isCalculating, setIsCalculating] = useState(false);
+
+  const totalWeight = cart.reduce((acc, item) => acc + (item.weight || 0.5) * item.quantity, 0);
+
+  useEffect(() => {
+    const fetchRates = async () => {
+      if (formData.pincode.length === 6) {
+        setIsCalculating(true);
+        try {
+          const res = await fetch('/api/calculate-shipping', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              toPincode: formData.pincode,
+              weight: totalWeight
+            })
+          });
+          const data = await res.json();
+          setAvailableRates(data.rates);
+          // Auto-select cheapest courier
+          const cheapest = Object.entries(data.rates).sort((a: any, b: any) => a[1].finalCost - b[1].finalCost)[0];
+          if (cheapest) setSelectedCourier(cheapest[0]);
+        } catch (err) {
+          console.error("Failed to fetch rates", err);
+        } finally {
+          setIsCalculating(false);
+        }
+      } else {
+        setAvailableRates(null);
+        setSelectedCourier('');
+      }
+    };
+    fetchRates();
+  }, [formData.pincode, totalWeight]);
 
   const shippingFee = (total >= (settings.shipping?.freeThreshold || 5000)) 
     ? 0 
-    : (settings.shipping?.pincodeRates?.[formData.pincode] || settings.shipping?.flatRate || 100);
+    : (availableRates && selectedCourier ? availableRates[selectedCourier].finalCost : (settings.shipping?.flatRate || 100));
   
   const grandTotal = total + shippingFee;
 
@@ -1863,9 +1974,32 @@ const Checkout = () => {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Pincode</label>
-              <input required type="text" value={formData.pincode} onChange={e => setFormData({ ...formData, pincode: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-gold-500 outline-none transition-all" />
+              <input required type="text" maxLength={6} value={formData.pincode} onChange={e => setFormData({ ...formData, pincode: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-gold-500 transition-all" />
             </div>
           </div>
+
+          {availableRates && (
+            <div className="space-y-4 pt-4 border-t border-gray-100">
+              <h4 className="text-sm font-bold uppercase tracking-widest text-gray-400">Select Shipping Method</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {Object.entries(availableRates).map(([id, rate]: [string, any]) => (
+                  <div 
+                    key={id}
+                    onClick={() => setSelectedCourier(id)}
+                    className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${selectedCourier === id ? 'border-gold-600 bg-gold-50' : 'border-gray-100 hover:border-gold-200'}`}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="font-bold text-gray-900">{rate.courierName}</p>
+                        <p className="text-xs text-gray-500">Est. {rate.estimatedDays} days</p>
+                      </div>
+                      <span className="font-bold text-gold-600">₹{rate.finalCost}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="space-y-4">
             <label className="text-sm font-medium text-gray-700">Payment Method</label>
@@ -3175,7 +3309,7 @@ const AdminProducts = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState({
     name: '', description: '', price: 0, originalPrice: 0, category: '', images: '', stock: 0, featured: false,
-    specs: '', labels: '', videoUrl: '', relatedProductIds: '', sizes: ''
+    specs: '', labels: '', videoUrl: '', relatedProductIds: '', sizes: '', weight: 0
   });
 
   useEffect(() => {
@@ -3218,6 +3352,7 @@ const AdminProducts = () => {
       labels: (formData.labels || '').split(',').map(s => s.trim()).filter(Boolean),
       relatedProductIds: (formData.relatedProductIds || '').split(',').map(s => s.trim()).filter(Boolean),
       sizes: (formData.sizes || '').split(',').map(s => s.trim()).filter(Boolean),
+      weight: Number(formData.weight || 0),
       specs: (formData.specs || '').split('\n').reduce((acc: any, line) => {
         const [key, ...val] = line.split(':');
         if (key && val.length > 0) acc[key.trim()] = val.join(':').trim();
@@ -3252,7 +3387,7 @@ const AdminProducts = () => {
           onClick={() => {
             setEditingProduct(null);
             setFormData({
-              name: '', description: '', price: 0, originalPrice: 0, category: '', images: '', stock: 0, featured: false, specs: '', labels: '', videoUrl: '', relatedProductIds: '', sizes: ''
+              name: '', description: '', price: 0, originalPrice: 0, category: '', images: '', stock: 0, featured: false, specs: '', labels: '', videoUrl: '', relatedProductIds: '', sizes: '', weight: 0
             });
             setIsModalOpen(true);
           }}
@@ -3322,6 +3457,7 @@ const AdminProducts = () => {
                           videoUrl: product.videoUrl || '',
                           relatedProductIds: (product.relatedProductIds || []).join(', '),
                           sizes: (product.sizes || []).join(', '),
+                          weight: product.weight || 0,
                           specs: product.specs ? Object.entries(product.specs).map(([k, v]) => `${k}: ${v}`).join('\n') : '',
                           labels: (product.labels || []).join(', ')
                         });
@@ -3422,6 +3558,10 @@ const AdminProducts = () => {
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Stock</label>
                     <input required type="number" value={formData.stock || 0} onChange={e => setFormData({ ...formData, stock: Number(e.target.value) })} className="w-full px-4 py-3 rounded-xl border border-gray-200" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Weight (kg)</label>
+                    <input required type="number" step="0.01" value={formData.weight || 0} onChange={e => setFormData({ ...formData, weight: Number(e.target.value) })} className="w-full px-4 py-3 rounded-xl border border-gray-200" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Category</label>
