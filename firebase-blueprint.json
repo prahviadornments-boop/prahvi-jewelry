@@ -1,196 +1,96 @@
 {
-  "entities": {
-    "Product": {
-      "title": "Product",
-      "description": "A jewelry product in the store",
-      "type": "object",
-      "properties": {
-        "name": { "type": "string", "description": "Product name" },
-        "description": { "type": "string", "description": "Product description" },
-        "price": { "type": "number", "description": "Product price" },
-        "originalPrice": { "type": "number", "description": "Original price before discount" },
-        "category": { "type": "string", "description": "Category ID" },
-        "images": { "type": "array", "description": "Array of image URLs" },
-        "stock": { "type": "number", "description": "Available stock" },
-        "featured": { "type": "boolean", "description": "Whether the product is featured on the home page" },
-        "createdAt": { "type": "string", "format": "date-time" }
+  "couriers": {
+    "delhivery": {
+      "id": "delhivery",
+      "name": "Delhivery",
+      "baseRate": 60,
+      "weightSlabs": [
+        { "maxWeight": 0.5, "rate": 40 },
+        { "maxWeight": 1, "rate": 60 },
+        { "maxWeight": 2, "rate": 80 },
+        { "maxWeight": 5, "rate": 120 },
+        { "maxWeight": 10, "rate": 200 },
+        { "maxWeight": 50, "rate": 500 }
+      ],
+      "zoneMultipliers": {
+        "metro": 1.0,
+        "tier1": 1.2,
+        "tier2": 1.5,
+        "tier3": 2.0,
+        "remote": 2.5
       },
-      "required": ["name", "price", "category", "images"]
+      "estimatedDays": {
+        "metro": 1,
+        "tier1": 2,
+        "tier2": 3,
+        "tier3": 4,
+        "remote": 5
+      }
     },
-    "Category": {
-      "title": "Category",
-      "description": "Product category",
-      "type": "object",
-      "properties": {
-        "name": { "type": "string", "description": "Category name" },
-        "description": { "type": "string", "description": "Category description" },
-        "image": { "type": "string", "description": "Category cover image URL" }
+    "fedex": {
+      "id": "fedex",
+      "name": "FedEx",
+      "baseRate": 100,
+      "weightSlabs": [
+        { "maxWeight": 0.5, "rate": 80 },
+        { "maxWeight": 1, "rate": 100 },
+        { "maxWeight": 2, "rate": 150 },
+        { "maxWeight": 5, "rate": 250 },
+        { "maxWeight": 10, "rate": 400 },
+        { "maxWeight": 50, "rate": 1000 }
+      ],
+      "zoneMultipliers": {
+        "metro": 1.0,
+        "tier1": 1.15,
+        "tier2": 1.4,
+        "tier3": 1.8,
+        "remote": 2.2
       },
-      "required": ["name"]
+      "estimatedDays": {
+        "metro": 1,
+        "tier1": 2,
+        "tier2": 3,
+        "tier3": 4,
+        "remote": 6
+      }
     },
-    "Order": {
-      "title": "Order",
-      "description": "A customer order",
-      "type": "object",
-      "properties": {
-        "customerName": { "type": "string" },
-        "customerEmail": { "type": "string" },
-        "customerPhone": { "type": "string" },
-        "address": { "type": "string" },
-        "items": { "type": "array" },
-        "total": { "type": "number" },
-        "status": { "type": "string", "enum": ["pending", "confirmed", "shipped", "delivered", "cancelled"] },
-        "trackingNumber": { "type": "string" },
-        "trackingLink": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
+    "ecomexpress": {
+      "id": "ecomexpress",
+      "name": "Ecom Express",
+      "baseRate": 55,
+      "weightSlabs": [
+        { "maxWeight": 0.5, "rate": 35 },
+        { "maxWeight": 1, "rate": 55 },
+        { "maxWeight": 2, "rate": 75 },
+        { "maxWeight": 5, "rate": 110 },
+        { "maxWeight": 10, "rate": 180 },
+        { "maxWeight": 50, "rate": 450 }
+      ],
+      "zoneMultipliers": {
+        "metro": 1.0,
+        "tier1": 1.25,
+        "tier2": 1.6,
+        "tier3": 2.1,
+        "remote": 2.7
       },
-      "required": ["customerName", "customerPhone", "items", "total", "status"]
-    },
-    "Review": {
-      "title": "Review",
-      "description": "Product review from a customer",
-      "type": "object",
-      "properties": {
-        "productId": { "type": "string" },
-        "customerName": { "type": "string" },
-        "rating": { "type": "number" },
-        "comment": { "type": "string" },
-        "approved": { "type": "boolean" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["productId", "customerName", "rating"]
-    },
-    "Policy": {
-      "title": "Policy",
-      "description": "Store policies",
-      "type": "object",
-      "properties": {
-        "title": { "type": "string" },
-        "content": { "type": "string" },
-        "type": { "type": "string", "enum": ["shipping", "return", "privacy", "terms"] }
-      },
-      "required": ["title", "content", "type"]
-    },
-    "ContactMessage": {
-      "title": "ContactMessage",
-      "description": "Message from contact us form",
-      "type": "object",
-      "properties": {
-        "name": { "type": "string" },
-        "email": { "type": "string" },
-        "phone": { "type": "string" },
-        "subject": { "type": "string" },
-        "message": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["name", "email", "phone", "message"]
-    },
-    "User": {
-      "title": "User",
-      "description": "Registered user profile",
-      "type": "object",
-      "properties": {
-        "email": { "type": "string" },
-        "displayName": { "type": "string" },
-        "role": { "type": "string", "enum": ["user", "admin"] },
-        "wishlist": { "type": "array", "description": "Array of product IDs" }
-      },
-      "required": ["email", "role"]
-    },
-    "StoreSettings": {
-      "title": "StoreSettings",
-      "description": "General store configuration and contact info",
-      "type": "object",
-      "properties": {
-        "siteName": { "type": "string" },
-        "siteDescription": { "type": "string" },
-        "address": { "type": "string" },
-        "phone": { "type": "string" },
-        "email": { "type": "string" },
-        "workingHours": { "type": "string" },
-        "instagram": { "type": "string" },
-        "facebook": { "type": "string" },
-        "whatsapp": { "type": "string" },
-        "hero": {
-          "type": "object",
-          "properties": {
-            "title": { "type": "string" },
-            "subtitle": { "type": "string" },
-            "description": { "type": "string" },
-            "image": { "type": "string" }
-          }
-        },
-        "about": {
-          "type": "object",
-          "properties": {
-            "title": { "type": "string" },
-            "content": { "type": "string" },
-            "image": { "type": "string" }
-          }
-        },
-        "categorySection": {
-          "type": "object",
-          "properties": {
-            "title": { "type": "string" },
-            "description": { "type": "string" }
-          }
-        },
-        "newsletter": {
-          "type": "object",
-          "properties": {
-            "title": { "type": "string" },
-            "description": { "type": "string" }
-          }
-        },
-        "featuredSection": {
-          "type": "object",
-          "properties": {
-            "title": { "type": "string" },
-            "description": { "type": "string" }
-          }
-        },
-        "features": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "icon": { "type": "string" },
-              "title": { "type": "string" },
-              "desc": { "type": "string" }
-            }
-          }
-        },
-        "quickLinks": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "name": { "type": "string" },
-              "path": { "type": "string" }
-            }
-          }
-        },
-        "paymentModes": {
-          "type": "object",
-          "properties": {
-            "whatsapp": { "type": "boolean" },
-            "card": { "type": "boolean" },
-            "upi": { "type": "boolean" }
-          }
-        },
-        "upiId": { "type": "string" },
-        "upiQrCode": { "type": "string" }
+      "estimatedDays": {
+        "metro": 1,
+        "tier1": 2,
+        "tier2": 3,
+        "tier3": 4,
+        "remote": 5
       }
     }
   },
-  "firestore": {
-    "/products/{productId}": { "schema": "Product", "description": "Store products" },
-    "/categories/{categoryId}": { "schema": "Category", "description": "Product categories" },
-    "/orders/{orderId}": { "schema": "Order", "description": "Customer orders" },
-    "/reviews/{reviewId}": { "schema": "Review", "description": "Product reviews" },
-    "/policies/{policyId}": { "schema": "Policy", "description": "Store policies" },
-    "/contact_messages/{messageId}": { "schema": "ContactMessage", "description": "Contact messages" },
-    "/users/{userId}": { "schema": "User", "description": "User profiles and wishlists" },
-    "/settings/store": { "schema": "StoreSettings", "description": "Store contact and social settings" }
+  "pincodes": {
+    "110001": "metro", "110002": "metro", "110003": "metro", "110004": "metro", "110005": "metro",
+    "400001": "metro", "400002": "metro", "400003": "metro", "400004": "metro", "400005": "metro",
+    "560001": "metro", "560002": "metro", "560003": "metro", "560004": "metro", "560005": "metro",
+    "411001": "tier1", "411002": "tier1", "411003": "tier1", "411004": "tier1", "411005": "tier1",
+    "500001": "tier1", "500002": "tier1", "500003": "tier1", "500004": "tier1", "500005": "tier1",
+    "201301": "tier2", "201302": "tier2", "201303": "tier2", "201304": "tier2", "201305": "tier2",
+    "282001": "tier2", "282002": "tier2", "282003": "tier2", "282004": "tier2", "282005": "tier2",
+    "271001": "tier3", "271002": "tier3", "271003": "tier3", "271004": "tier3", "271005": "tier3",
+    "842001": "remote", "842002": "remote", "842003": "remote", "842004": "remote", "842005": "remote"
   }
 }

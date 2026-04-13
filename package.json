@@ -1,40 +1,196 @@
 {
-  "name": "react-example",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite --port=3000 --host=0.0.0.0",
-    "build": "vite build",
-    "preview": "vite preview",
-    "clean": "rm -rf dist",
-    "lint": "tsc --noEmit"
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "A jewelry product in the store",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Product name" },
+        "description": { "type": "string", "description": "Product description" },
+        "price": { "type": "number", "description": "Product price" },
+        "originalPrice": { "type": "number", "description": "Original price before discount" },
+        "category": { "type": "string", "description": "Category ID" },
+        "images": { "type": "array", "description": "Array of image URLs" },
+        "stock": { "type": "number", "description": "Available stock" },
+        "featured": { "type": "boolean", "description": "Whether the product is featured on the home page" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "price", "category", "images"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "Product category",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Category name" },
+        "description": { "type": "string", "description": "Category description" },
+        "image": { "type": "string", "description": "Category cover image URL" }
+      },
+      "required": ["name"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "A customer order",
+      "type": "object",
+      "properties": {
+        "customerName": { "type": "string" },
+        "customerEmail": { "type": "string" },
+        "customerPhone": { "type": "string" },
+        "address": { "type": "string" },
+        "items": { "type": "array" },
+        "total": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "shipped", "delivered", "cancelled"] },
+        "trackingNumber": { "type": "string" },
+        "trackingLink": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["customerName", "customerPhone", "items", "total", "status"]
+    },
+    "Review": {
+      "title": "Review",
+      "description": "Product review from a customer",
+      "type": "object",
+      "properties": {
+        "productId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "rating": { "type": "number" },
+        "comment": { "type": "string" },
+        "approved": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["productId", "customerName", "rating"]
+    },
+    "Policy": {
+      "title": "Policy",
+      "description": "Store policies",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "type": { "type": "string", "enum": ["shipping", "return", "privacy", "terms"] }
+      },
+      "required": ["title", "content", "type"]
+    },
+    "ContactMessage": {
+      "title": "ContactMessage",
+      "description": "Message from contact us form",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "subject": { "type": "string" },
+        "message": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "email", "phone", "message"]
+    },
+    "User": {
+      "title": "User",
+      "description": "Registered user profile",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "admin"] },
+        "wishlist": { "type": "array", "description": "Array of product IDs" }
+      },
+      "required": ["email", "role"]
+    },
+    "StoreSettings": {
+      "title": "StoreSettings",
+      "description": "General store configuration and contact info",
+      "type": "object",
+      "properties": {
+        "siteName": { "type": "string" },
+        "siteDescription": { "type": "string" },
+        "address": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "workingHours": { "type": "string" },
+        "instagram": { "type": "string" },
+        "facebook": { "type": "string" },
+        "whatsapp": { "type": "string" },
+        "hero": {
+          "type": "object",
+          "properties": {
+            "title": { "type": "string" },
+            "subtitle": { "type": "string" },
+            "description": { "type": "string" },
+            "image": { "type": "string" }
+          }
+        },
+        "about": {
+          "type": "object",
+          "properties": {
+            "title": { "type": "string" },
+            "content": { "type": "string" },
+            "image": { "type": "string" }
+          }
+        },
+        "categorySection": {
+          "type": "object",
+          "properties": {
+            "title": { "type": "string" },
+            "description": { "type": "string" }
+          }
+        },
+        "newsletter": {
+          "type": "object",
+          "properties": {
+            "title": { "type": "string" },
+            "description": { "type": "string" }
+          }
+        },
+        "featuredSection": {
+          "type": "object",
+          "properties": {
+            "title": { "type": "string" },
+            "description": { "type": "string" }
+          }
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "icon": { "type": "string" },
+              "title": { "type": "string" },
+              "desc": { "type": "string" }
+            }
+          }
+        },
+        "quickLinks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "path": { "type": "string" }
+            }
+          }
+        },
+        "paymentModes": {
+          "type": "object",
+          "properties": {
+            "whatsapp": { "type": "boolean" },
+            "card": { "type": "boolean" },
+            "upi": { "type": "boolean" }
+          }
+        },
+        "upiId": { "type": "string" },
+        "upiQrCode": { "type": "string" }
+      }
+    }
   },
-  "dependencies": {
-    "@google/genai": "^1.29.0",
-    "@tailwindcss/vite": "^4.1.14",
-    "@vitejs/plugin-react": "^5.0.4",
-    "clsx": "^2.1.1",
-    "dotenv": "^17.2.3",
-    "express": "^4.21.2",
-    "firebase": "^12.11.0",
-    "lucide-react": "^0.546.0",
-    "motion": "^12.23.24",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-router-dom": "^7.14.0",
-    "recharts": "^3.8.1",
-    "sonner": "^2.0.7",
-    "tailwind-merge": "^3.5.0",
-    "vite": "^6.2.0"
-  },
-  "devDependencies": {
-    "@types/express": "^4.17.21",
-    "@types/node": "^22.14.0",
-    "autoprefixer": "^10.4.21",
-    "tailwindcss": "^4.1.14",
-    "tsx": "^4.21.0",
-    "typescript": "~5.8.2",
-    "vite": "^6.2.0"
+  "firestore": {
+    "/products/{productId}": { "schema": "Product", "description": "Store products" },
+    "/categories/{categoryId}": { "schema": "Category", "description": "Product categories" },
+    "/orders/{orderId}": { "schema": "Order", "description": "Customer orders" },
+    "/reviews/{reviewId}": { "schema": "Review", "description": "Product reviews" },
+    "/policies/{policyId}": { "schema": "Policy", "description": "Store policies" },
+    "/contact_messages/{messageId}": { "schema": "ContactMessage", "description": "Contact messages" },
+    "/users/{userId}": { "schema": "User", "description": "User profiles and wishlists" },
+    "/settings/store": { "schema": "StoreSettings", "description": "Store contact and social settings" }
   }
 }

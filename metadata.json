@@ -1,5 +1,10 @@
 {
-  "name": "Prahvi Jewelry",
-  "description": "Modern, trendy jewellery designed to elevate your everyday style. Premium Style. Affordable Luxury.",
-  "requestFramePermissions": []
+  "projectId": "ai-studio-applet-webapp-2ee84",
+  "appId": "1:419832011080:web:0db77bc91377f5dcd3fb7d",
+  "apiKey": "AIzaSyBNN6ZMlD4ybOa8prY8BVtIM-Z-P1MtMCA",
+  "authDomain": "ai-studio-applet-webapp-2ee84.firebaseapp.com",
+  "firestoreDatabaseId": "ai-studio-237725a5-9432-45f4-88f8-e969a4b3c7a9",
+  "storageBucket": "ai-studio-applet-webapp-2ee84.firebasestorage.app",
+  "messagingSenderId": "419832011080",
+  "measurementId": ""
 }
