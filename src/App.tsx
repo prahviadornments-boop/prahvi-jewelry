@@ -67,6 +67,70 @@ const uploadToImgBB = async (file: File) => {
   }
 };
 
+const ConfirmModal = ({ 
+  isOpen, 
+  onClose, 
+  onConfirm, 
+  title, 
+  message, 
+  confirmText = "Confirm", 
+  cancelText = "Cancel",
+  variant = "danger"
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  onConfirm: () => void; 
+  title: string; 
+  message: string; 
+  confirmText?: string; 
+  cancelText?: string;
+  variant?: "danger" | "primary"
+}) => {
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }} 
+            onClick={onClose} 
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm" 
+          />
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9, y: 20 }} 
+            animate={{ opacity: 1, scale: 1, y: 0 }} 
+            exit={{ opacity: 0, scale: 0.9, y: 20 }} 
+            className="relative bg-white w-full max-w-sm rounded-3xl shadow-2xl p-8 space-y-6 text-center"
+          >
+            <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center ${variant === 'danger' ? 'bg-red-50 text-red-500' : 'bg-gold-50 text-gold-600'}`}>
+              {variant === 'danger' ? <Trash2 size={32} /> : <AlertTriangle size={32} />}
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-serif font-bold text-gray-900">{title}</h3>
+              <p className="text-sm text-gray-500 leading-relaxed">{message}</p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button 
+                onClick={onClose}
+                className="flex-1 px-6 py-3 rounded-xl font-bold text-gray-600 bg-gray-50 hover:bg-gray-100 transition-all"
+              >
+                {cancelText}
+              </button>
+              <button 
+                onClick={() => { onConfirm(); onClose(); }}
+                className={`flex-1 px-6 py-3 rounded-xl font-bold text-white transition-all shadow-lg ${variant === 'danger' ? 'bg-red-500 hover:bg-red-600 shadow-red-500/20' : 'bg-gold-600 hover:bg-gold-500 shadow-gold-600/20'}`}
+              >
+                {confirmText}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+};
+
 const AnnouncementBar = () => {
   const { settings } = useSettings();
   if (!settings?.announcementBar?.enabled) return null;
@@ -1605,6 +1669,7 @@ const Cart = () => {
   const { cart, removeFromCart, updateQuantity, total, clearCart } = useCart();
   const { settings } = useSettings();
   const navigate = useNavigate();
+  const [isClearModalOpen, setIsClearModalOpen] = useState(false);
 
   const shippingFee = (total >= (settings.shipping?.freeThreshold || 5000)) ? 0 : (settings.shipping?.flatRate || 0);
   const grandTotal = total + shippingFee;
@@ -1658,17 +1723,22 @@ const Cart = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 sm:mb-12">
         <h1 className="text-2xl sm:text-4xl font-serif font-bold">Shopping Bag</h1>
         <button
-          onClick={() => {
-            if (confirm("Clear your shopping bag?")) {
-              clearCart();
-            }
-          }}
+          onClick={() => setIsClearModalOpen(true)}
           className="text-sm font-bold text-red-500 hover:text-red-600 flex items-center space-x-2 px-4 py-2 bg-red-50 rounded-full transition-all"
         >
           <Trash2 size={16} />
           <span>Clear Bag</span>
         </button>
       </div>
+
+      <ConfirmModal 
+        isOpen={isClearModalOpen}
+        onClose={() => setIsClearModalOpen(false)}
+        onConfirm={clearCart}
+        title="Clear Shopping Bag?"
+        message="Are you sure you want to remove all items from your bag? This action cannot be undone."
+        confirmText="Yes, Clear Bag"
+      />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 sm:gap-16">
         <div className="lg:col-span-2 space-y-4 sm:space-y-8">
           {cart.map(item => (
@@ -3388,6 +3458,19 @@ const AdminProducts = () => {
   }, []);
 
   const [isUploading, setIsUploading] = useState(false);
+  const [deletingProductId, setDeletingProductId] = useState<string | null>(null);
+
+  const handleDeleteProduct = async () => {
+    if (!deletingProductId) return;
+    try {
+      await deleteDoc(doc(db, 'products', deletingProductId));
+      setProducts(products.filter(p => p.id !== deletingProductId));
+      toast.success("Product deleted");
+    } catch (error) {
+      toast.error("Delete failed");
+    }
+    setDeletingProductId(null);
+  };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -3546,13 +3629,7 @@ const AdminProducts = () => {
                       <Settings size={18} />
                     </button>
                     <button
-                      onClick={async () => {
-                        if (confirm("Delete this product?")) {
-                          await deleteDoc(doc(db, 'products', product.id));
-                          setProducts(products.filter(p => p.id !== product.id));
-                          toast.success("Product deleted");
-                        }
-                      }}
+                      onClick={() => setDeletingProductId(product.id)}
                       className="p-2 text-gray-400 hover:text-red-500 transition-colors"
                     >
                       <Trash2 size={18} />
@@ -3564,6 +3641,14 @@ const AdminProducts = () => {
           </tbody>
         </table>
       </div>
+
+      <ConfirmModal 
+        isOpen={!!deletingProductId}
+        onClose={() => setDeletingProductId(null)}
+        onConfirm={handleDeleteProduct}
+        title="Delete Product?"
+        message="Are you sure you want to delete this product? This action cannot be undone."
+      />
 
       {/* Modal */}
       <AnimatePresence>
@@ -3731,6 +3816,7 @@ const AdminCategories = () => {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [formData, setFormData] = useState({ name: '', description: '', image: '' });
   const [isUploading, setIsUploading] = useState(false);
+  const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -3776,10 +3862,22 @@ const AdminCategories = () => {
     }
   };
 
+  const handleDeleteCategory = async () => {
+    if (!deletingCategoryId) return;
+    try {
+      await deleteDoc(doc(db, 'categories', deletingCategoryId));
+      setCategories(categories.filter(c => c.id !== deletingCategoryId));
+      toast.success("Category deleted");
+    } catch (error) {
+      toast.error("Failed to delete category");
+    }
+    setDeletingCategoryId(null);
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-serif font-bold">Manage Categories v2</h1>
+        <h1 className="text-3xl font-serif font-bold">Manage Categories</h1>
         <button 
           onClick={() => {
             setEditingCategory(null);
@@ -3815,13 +3913,7 @@ const AdminCategories = () => {
                   <Edit2 size={14} />
                 </button>
                 <button
-                  onClick={async () => {
-                    if (confirm("Delete category?")) {
-                      await deleteDoc(doc(db, 'categories', cat.id));
-                      setCategories(categories.filter(c => c.id !== cat.id));
-                      toast.success("Category deleted");
-                    }
-                  }}
+                  onClick={() => setDeletingCategoryId(cat.id)}
                   className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
                   title="Delete Category"
                 >
@@ -3832,6 +3924,14 @@ const AdminCategories = () => {
           </div>
         ))}
       </div>
+
+      <ConfirmModal 
+        isOpen={!!deletingCategoryId}
+        onClose={() => setDeletingCategoryId(null)}
+        onConfirm={handleDeleteCategory}
+        title="Delete Category?"
+        message="Are you sure you want to delete this category? This action cannot be undone."
+      />
 
       <AnimatePresence>
         {isModalOpen && (
@@ -3878,6 +3978,7 @@ const AdminCategories = () => {
 const AdminAbandonedCarts = () => {
   const [carts, setCarts] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingCartId, setDeletingCartId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCarts = async () => {
@@ -3895,15 +3996,16 @@ const AdminAbandonedCarts = () => {
     window.open(url, '_blank');
   };
 
-  const deleteCart = async (id: string) => {
-    if (!window.confirm("Delete this abandoned bag?")) return;
+  const handleDeleteCart = async () => {
+    if (!deletingCartId) return;
     try {
-      await deleteDoc(doc(db, 'orders', id));
-      setCarts(carts.filter(c => c.id !== id));
+      await deleteDoc(doc(db, 'orders', deletingCartId));
+      setCarts(carts.filter(c => c.id !== deletingCartId));
       toast.success("Deleted");
     } catch (error) {
       toast.error("Failed to delete");
     }
+    setDeletingCartId(null);
   };
 
   if (loading) return <div className="pt-20 text-center font-serif text-xl">Loading abandoned bags...</div>;
@@ -3948,7 +4050,7 @@ const AdminAbandonedCarts = () => {
                       <span>Send Reminder</span>
                     </button>
                     <button
-                      onClick={() => deleteCart(cart.id)}
+                      onClick={() => setDeletingCartId(cart.id)}
                       className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-all"
                     >
                       <Trash2 size={14} />
@@ -3965,6 +4067,14 @@ const AdminAbandonedCarts = () => {
           </tbody>
         </table>
       </div>
+
+      <ConfirmModal 
+        isOpen={!!deletingCartId}
+        onClose={() => setDeletingCartId(null)}
+        onConfirm={handleDeleteCart}
+        title="Delete Abandoned Bag?"
+        message="Are you sure you want to delete this abandoned bag record?"
+      />
     </div>
   );
 };
@@ -3972,6 +4082,8 @@ const AdminAbandonedCarts = () => {
 const AdminOrders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isClearModalOpen, setIsClearModalOpen] = useState(false);
+  const [deletingOrderId, setDeletingOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -4019,19 +4131,19 @@ const AdminOrders = () => {
     window.open(url, '_blank');
   };
 
-  const deleteOrder = async (orderId: string) => {
-    if (!window.confirm("Are you sure you want to delete this order? This cannot be undone.")) return;
+  const handleDeleteOrder = async () => {
+    if (!deletingOrderId) return;
     try {
-      await deleteDoc(doc(db, 'orders', orderId));
-      setOrders(orders.filter(o => o.id !== orderId));
+      await deleteDoc(doc(db, 'orders', deletingOrderId));
+      setOrders(orders.filter(o => o.id !== deletingOrderId));
       toast.success("Order deleted");
     } catch (error) {
       toast.error("Delete failed");
     }
+    setDeletingOrderId(null);
   };
 
-  const clearAllOrders = async () => {
-    if (!window.confirm("CRITICAL: This will delete ALL orders from your database. This cannot be undone. Are you absolutely sure?")) return;
+  const handleClearAllOrders = async () => {
     try {
       const snap = await getDocs(collection(db, 'orders'));
       const deletePromises = snap.docs.map(doc => deleteDoc(doc.ref));
@@ -4041,6 +4153,7 @@ const AdminOrders = () => {
     } catch (error) {
       toast.error("Failed to clear orders");
     }
+    setIsClearModalOpen(false);
   };
 
   const exportToCSV = () => {
@@ -4072,7 +4185,7 @@ const AdminOrders = () => {
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-serif font-bold">Manage Orders v2</h1>
+        <h1 className="text-3xl font-serif font-bold">Manage Orders</h1>
         <div className="flex items-center space-x-4">
           <button
             onClick={exportToCSV}
@@ -4082,7 +4195,7 @@ const AdminOrders = () => {
             <span>Export CSV</span>
           </button>
           <button
-            onClick={clearAllOrders}
+            onClick={() => setIsClearModalOpen(true)}
             className="flex items-center space-x-2 px-6 py-3 bg-red-50 text-red-600 rounded-xl font-bold hover:bg-red-100 transition-all"
           >
             <Trash2 size={18} />
@@ -4090,6 +4203,30 @@ const AdminOrders = () => {
           </button>
         </div>
       </div>
+
+      <ConfirmModal 
+        isOpen={isClearModalOpen}
+        onClose={() => setIsClearModalOpen(false)}
+        onConfirm={handleClearAllOrders}
+        title="Delete ALL Orders?"
+        message="CRITICAL: This will permanently delete every order in your database. This action is irreversible. Are you absolutely sure?"
+      />
+
+      <ConfirmModal 
+        isOpen={isClearModalOpen}
+        onClose={() => setIsClearModalOpen(false)}
+        onConfirm={handleClearAllOrders}
+        title="Delete ALL Orders?"
+        message="CRITICAL: This will permanently delete every order in your database. This action is irreversible. Are you absolutely sure?"
+      />
+
+      <ConfirmModal 
+        isOpen={!!deletingOrderId}
+        onClose={() => setDeletingOrderId(null)}
+        onConfirm={handleDeleteOrder}
+        title="Delete Order?"
+        message="Are you sure you want to delete this order? This action cannot be undone."
+      />
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <table className="w-full text-left">
           <thead className="bg-gray-50 border-b border-gray-100">
@@ -4173,7 +4310,7 @@ const AdminOrders = () => {
                       <Truck size={14} />
                     </button>
                     <button
-                      onClick={() => deleteOrder(order.id)}
+                      onClick={() => setDeletingOrderId(order.id)}
                       className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-all"
                       title="Delete Order"
                     >
