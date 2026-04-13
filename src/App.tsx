@@ -11,8 +11,7 @@ import {
   LayoutDashboard, Package, ListTree, ShoppingBag, MessageSquare, Settings, 
   LogOut, ExternalLink, Upload, AlertTriangle, TrendingUp, CreditCard, Sparkles, 
   Coins, Diamond, Flower, Circle, Watch, Hexagon, Gift, MoreHorizontal, Edit2, Download,
-  MessageCircle, Search, Info, Play, Share2, Ruler, QrCode, CheckCircle,
-  Clock, Globe, Headphones, Lock, Percent, RotateCcw, Smile, Tag, ThumbsUp, Zap
+  MessageCircle, Search, Info, Play, Share2, Ruler, QrCode, CheckCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -26,8 +25,7 @@ const LucideIcons: any = {
   LayoutDashboard, Package, ListTree, ShoppingBag, MessageSquare, Settings, 
   LogOut, ExternalLink, Upload, AlertTriangle, TrendingUp, CreditCard, Sparkles, 
   Coins, Diamond, Flower, Circle, Watch, Hexagon, Gift, MoreHorizontal, Edit2, Download,
-  MessageCircle, Search, Info, Play, Share2, Ruler, QrCode, CheckCircle,
-  Clock, Globe, Headphones, Lock, Percent, RotateCcw, Smile, Tag, ThumbsUp, Zap
+  MessageCircle, Search, Info, Play, Share2, Ruler, QrCode, CheckCircle
 };
 
 // --- Components ---
