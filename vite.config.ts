@@ -1,20 +1,39 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+import tailwindcss from '@tailwindcss/vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { defineConfig, loadEnv } from 'vite';
 
-# Run and deploy your AI Studio app
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-This contains everything you need to run your app locally.
-
-View your app in AI Studio: https://ai.studio/apps/237725a5-9432-45f4-88f8-e969a4b3c7a9
-
-## Run Locally
-
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, '.', '');
+  return {
+    plugins: [react(), tailwindcss()],
+    define: {
+      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY || ''),
+    },
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, '.'),
+      },
+    },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+            'vendor-firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/storage'],
+            'vendor-ui': ['lucide-react', 'motion', 'sonner'],
+            'vendor-charts': ['recharts'],
+          },
+        },
+      },
+      chunkSizeWarningLimit: 1000,
+    },
+    server: {
+      hmr: process.env.DISABLE_HMR !== 'true',
+    },
+  };
+});
